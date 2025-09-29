@@ -11,5 +11,5 @@ class TelaMenu(arcade.View):
        
        arcade.draw_texture_rect(
            self.background_image,
-           arcade.XTWH(540, 120, self_background_image.widtg, self.background_image.height)
+           arcade.XYWH(540, 120, self.background_image.width, self.background_image.height).scale(0.2)
        )

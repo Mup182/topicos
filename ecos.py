@@ -23,7 +23,7 @@ except:
     fonte = pygame.font.SysFont("Arial", 48, bold=True)
 
 # Fundo
-fundo = pygame.image.load("fundo_menu.jpg")
+fundo = pygame.image.load("asets/imagens/fundo_menu.jpg")
 fundo = pygame.transform.scale(fundo, (LARGURA, ALTURA))
 
 # Classe para botões

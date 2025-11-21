@@ -53,36 +53,55 @@ class TelaDialogos(arcade.View):
             ],
         ]
         self.dialogo_texto = [" ".join(linhas).strip() for linhas in blocos]
+        print(f"DEBUG: Carregados {len(self.dialogo_texto)} blocos de diálogo em _carregar_textos_exemplo()")
 
     def _criar_text_objs(self) -> None:
         """(Re)cria os objetos arcade.Text a partir de self.dialogo_texto,
         usando a largura atual da janela para a quebra de linha."""
-        # Calcula largura disponível respeitando as margens configuradas
-        window_width = self.window.width if self.window else self.largura
-        largura_disponivel = max(100, window_width - DIALOG_MARGIN_LEFT - DIALOG_MARGIN_RIGHT)
-        
-        # Posição inicial (x,y) dentro da caixa de diálogo usando as margens configuradas
-        x = DIALOG_MARGIN_LEFT
-        y = DIALOG_MARGIN_BOTTOM
-        
-        self.dialogo_text_objs = [
-            arcade.Text(
-                txt,
-                x,
-                y,
-                arcade.color.WHITE,
-                font_size=18,
-                width=largura_disponivel,
-                anchor_x="left",
-                anchor_y="bottom",
-                font_name=self.font_name,
-            )
-            for txt in self.dialogo_texto
-        ]
+        # Valida que há diálogos para criar
+        if not self.dialogo_texto:
+            print("AVISO: dialogo_texto está vazio em _criar_text_objs()")
+            self.dialogo_text_objs = []
+            return
+            
+        try:
+            # Calcula largura disponível respeitando as margens configuradas
+            window_width = self.window.width if self.window else self.largura
+            largura_disponivel = max(100, window_width - DIALOG_MARGIN_LEFT - DIALOG_MARGIN_RIGHT)
+            
+            # Posição inicial (x,y) dentro da caixa de diálogo usando as margens configuradas
+            x = DIALOG_MARGIN_LEFT
+            y = DIALOG_MARGIN_BOTTOM
+            
+            self.dialogo_text_objs = [
+                arcade.Text(
+                    txt,
+                    x,
+                    y,
+                    arcade.color.WHITE,
+                    font_size=18,
+                    width=largura_disponivel,
+                    anchor_x="left",
+                    anchor_y="bottom",
+                    font_name=self.font_name,
+                )
+                for txt in self.dialogo_texto
+            ]
+            print(f"DEBUG: Criados {len(self.dialogo_text_objs)} objetos de texto de diálogo")
+        except Exception as e:
+            print(f"ERRO ao criar objetos de texto: {e}")
+            import traceback
+            traceback.print_exc()
+            self.dialogo_text_objs = []
 
     def on_show(self) -> None:
         arcade.set_background_color((10, 10, 10))
         self.spritelist = arcade.SpriteList()
+
+        # Valida que os diálogos foram carregados
+        if not self.dialogo_texto:
+            print("AVISO: dialogo_texto está vazio em on_show(). Carregando textos de exemplo...")
+            self._carregar_textos_exemplo()
 
         # background como sprite (se existir)
         if self.bg_texture:
@@ -115,6 +134,10 @@ class TelaDialogos(arcade.View):
 
         # (re)cria os Text objects para os diálogos agora que temos acesso à janela
         self._criar_text_objs()
+        
+        # Valida que os text objects foram criados
+        if not self.dialogo_text_objs:
+            print("ERRO: dialogo_text_objs ainda está vazio após _criar_text_objs()")
 
     def on_draw(self) -> None:
         self.clear()

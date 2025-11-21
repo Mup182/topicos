@@ -147,6 +147,11 @@ class TelaDialogos(arcade.View):
         # left, right, bottom, top
         arcade.draw_lrbt_rectangle_filled(0, self.window.width, 0, DIALOG_BOX_HEIGHT, (0, 0, 0, 200))
 
+        # Garantir que os text objects existam (caso on_draw seja chamado antes de on_show)
+        if not self.dialogo_text_objs and self.dialogo_texto:
+            print("AVISO: on_draw chamado antes de on_show. Criando text objects...")
+            self._criar_text_objs()
+
         # desenha o bloco atual via Text objeto pré-criado
         if self.dialogo_text_objs:
             txt_obj = self.dialogo_text_objs[self.ordem_index]

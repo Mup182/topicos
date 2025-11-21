@@ -3,7 +3,15 @@ import os
 import arcade
 from typing import List, Optional
 from core.utils import safe_load_texture
-from core.settings import DEFAULT_BG_PATH, CLICK_SOUND_PATH
+from core.settings import (
+    DEFAULT_BG_PATH, 
+    CLICK_SOUND_PATH,
+    DIALOG_BOX_HEIGHT,
+    DIALOG_MARGIN_LEFT,
+    DIALOG_MARGIN_RIGHT,
+    DIALOG_MARGIN_BOTTOM,
+    DIALOG_MARGIN_TOP
+)
 
 
 class TelaDialogos(arcade.View):
@@ -49,10 +57,14 @@ class TelaDialogos(arcade.View):
     def _criar_text_objs(self) -> None:
         """(Re)cria os objetos arcade.Text a partir de self.dialogo_texto,
         usando a largura atual da janela para a quebra de linha."""
-        largura_disponivel = max(100, (self.window.width - 80) if self.window else self.largura - 80)
-        # posição inicial (x,y) dentro da caixa de diálogo (margem de 40 left, 28 bottom)
-        x = 40
-        y = 28
+        # Calcula largura disponível respeitando as margens configuradas
+        window_width = self.window.width if self.window else self.largura
+        largura_disponivel = max(100, window_width - DIALOG_MARGIN_LEFT - DIALOG_MARGIN_RIGHT)
+        
+        # Posição inicial (x,y) dentro da caixa de diálogo usando as margens configuradas
+        x = DIALOG_MARGIN_LEFT
+        y = DIALOG_MARGIN_BOTTOM
+        
         self.dialogo_text_objs = [
             arcade.Text(
                 txt,
@@ -108,27 +120,26 @@ class TelaDialogos(arcade.View):
         self.clear()
         self.spritelist.draw()
 
-        # caixa de diálogo maior (top=180)
-        box_top = 180
+        # Desenha a caixa de diálogo usando a altura configurada
         # left, right, bottom, top
-        arcade.draw_lrbt_rectangle_filled(0, self.window.width, 0, box_top, (0, 0, 0, 200))
+        arcade.draw_lrbt_rectangle_filled(0, self.window.width, 0, DIALOG_BOX_HEIGHT, (0, 0, 0, 200))
 
         # desenha o bloco atual via Text objeto pré-criado
         if self.dialogo_text_objs:
             txt_obj = self.dialogo_text_objs[self.ordem_index]
-            # atualiza largura caso a janela tenha mudado
-            txt_obj.width = max(100, self.window.width - 80)
+            # atualiza largura caso a janela tenha mudado, respeitando as margens
+            txt_obj.width = max(100, self.window.width - DIALOG_MARGIN_LEFT - DIALOG_MARGIN_RIGHT)
             # a posição x/y foi definida na criação; redesenha
             txt_obj.draw()
         else:
             # fallback mínimo (não deveria ocorrer se on_show rodou corretamente)
             arcade.draw_text(
                 "Sem diálogos carregados.",
-                40,
-                28,
+                DIALOG_MARGIN_LEFT,
+                DIALOG_MARGIN_BOTTOM,
                 arcade.color.WHITE,
                 font_size=18,
-                width=max(100, self.window.width - 80),
+                width=max(100, self.window.width - DIALOG_MARGIN_LEFT - DIALOG_MARGIN_RIGHT),
                 anchor_x="left",
                 anchor_y="bottom",
                 font_name=self.font_name,

@@ -5,8 +5,15 @@ from typing import List, Optional
 from core.utils import safe_load_texture
 from core.settings import DEFAULT_BG_PATH, CLICK_SOUND_PATH
 
+
 class TelaDialogos(arcade.View):
-    def __init__(self, largura: int = 1280, altura: int = 720, font_name: Optional[str] = None, bg_path: Optional[str] = DEFAULT_BG_PATH):
+    def __init__(
+        self,
+        largura: int = 1280,
+        altura: int = 720,
+        font_name: Optional[str] = None,
+        bg_path: Optional[str] = DEFAULT_BG_PATH,
+    ):
         super().__init__()
         self.largura = largura
         self.altura = altura
@@ -19,17 +26,47 @@ class TelaDialogos(arcade.View):
         self.ordem_itens: List[arcade.Sprite] = []
         self.ordem_index: int = 0
         self.dialogo_texto: List[str] = []
+        # garante que o atributo exista antes de on_show
+        self.dialogo_text_objs: List[arcade.Text] = []
         self._carregar_textos_exemplo()
         self.click = None
 
     def _carregar_textos_exemplo(self) -> None:
         blocos = [
             ["Ache o filhote."],
-            ["Enquanto explorava cautelosamente o terreno, o filhote percebeu algo se mexendo perto de um rio lamacento que cortava o lixão."],
-            ["Era uma barata, deslizando lentamente entre os detritos e refletindo à luz cinzenta do dia. O gato, curioso e faminto, aproximou-se devagar e cada passo seu afundava um pouco na lama."],
-            ["Entre o despejo do esgoto e restos de pneus, um peixe morto jazia à beira da água. Coberto de lama e moscas, era para o filhote uma refeição preciosa."]
+            [
+                "Enquanto explorava cautelosamente o terreno, o filhote percebeu algo se mexendo perto de um rio lamacento que cortava o lixão."
+            ],
+            [
+                "Era uma barata, deslizando lentamente entre os detritos e refletindo à luz cinzenta do dia. O gato, curioso e faminto, aproximou-se devagar..."
+            ],
+            [
+                "Entre o despejo do esgoto e restos de pneus, um peixe morto jazia à beira da água. Coberto de lama e moscas, era para o filhote uma refeição preciosa."
+            ],
         ]
         self.dialogo_texto = [" ".join(linhas).strip() for linhas in blocos]
+
+    def _criar_text_objs(self) -> None:
+        """(Re)cria os objetos arcade.Text a partir de self.dialogo_texto,
+        usando a largura atual da janela para a quebra de linha."""
+        largura_disponivel = max(100, (self.window.width - 80) if self.window else self.largura - 80)
+        # posição inicial (x,y) dentro da caixa de diálogo (margem de 40 left, 28 bottom)
+        x = 40
+        y = 28
+        self.dialogo_text_objs = [
+            arcade.Text(
+                txt,
+                x,
+                y,
+                arcade.color.WHITE,
+                font_size=18,
+                width=largura_disponivel,
+                anchor_x="left",
+                anchor_y="bottom",
+                font_name=self.font_name,
+            )
+            for txt in self.dialogo_texto
+        ]
 
     def on_show(self) -> None:
         arcade.set_background_color((10, 10, 10))
@@ -38,12 +75,15 @@ class TelaDialogos(arcade.View):
         # background como sprite (se existir)
         if self.bg_texture:
             try:
-                fundo = arcade.Sprite(self.bg_path,
-                                      scale=max(self.window.width / 1280, self.window.height / 720),
-                                      center_x=self.window.width // 2,
-                                      center_y=self.window.height // 2)
+                fundo = arcade.Sprite(
+                    self.bg_path,
+                    scale=max(self.window.width / 1280, self.window.height / 720),
+                    center_x=self.window.width // 2,
+                    center_y=self.window.height // 2,
+                )
                 self.spritelist.append(fundo)
             except Exception:
+                # se falhar ao criar o sprite de background, apenas ignoramos
                 pass
 
         # cria um item interativo (placeholder) - sprite sólido
@@ -61,8 +101,8 @@ class TelaDialogos(arcade.View):
         except Exception:
             self.click = None
 
-        # pre-create Text objects for dialogs (performance)
-        self.dialogo_text_objs = [arcade.Text(txt, 40, 28, arcade.color.WHITE, font_size=18, width=max(100, self.window.width - 80), anchor_x="left", font_name=self.font_name) for txt in self.dialogo_texto]
+        # (re)cria os Text objects para os diálogos agora que temos acesso à janela
+        self._criar_text_objs()
 
     def on_draw(self) -> None:
         self.clear()
@@ -70,21 +110,48 @@ class TelaDialogos(arcade.View):
 
         # caixa de diálogo maior (top=180)
         box_top = 180
+        # left, right, bottom, top
         arcade.draw_lrbt_rectangle_filled(0, self.window.width, 0, box_top, (0, 0, 0, 200))
 
         # desenha o bloco atual via Text objeto pré-criado
-        txt_obj = self.dialogo_text_objs[self.ordem_index]
-        txt_obj.width = max(100, self.window.width - 80)
-        txt_obj.draw()
+        if self.dialogo_text_objs:
+            txt_obj = self.dialogo_text_objs[self.ordem_index]
+            # atualiza largura caso a janela tenha mudado
+            txt_obj.width = max(100, self.window.width - 80)
+            # a posição x/y foi definida na criação; redesenha
+            txt_obj.draw()
+        else:
+            # fallback mínimo (não deveria ocorrer se on_show rodou corretamente)
+            arcade.draw_text(
+                "Sem diálogos carregados.",
+                40,
+                28,
+                arcade.color.WHITE,
+                font_size=18,
+                width=max(100, self.window.width - 80),
+                anchor_x="left",
+                anchor_y="bottom",
+                font_name=self.font_name,
+            )
 
         if self.ordem_index < len(self.dialogo_texto) - 1:
-            arcade.draw_text("Clique ou pressione [Enter] para continuar.",
-                             self.window.width - 20, 8,
-                             arcade.color.LIGHT_GRAY, font_size=12, anchor_x="right")
+            arcade.draw_text(
+                "Clique ou pressione [Enter] para continuar.",
+                self.window.width - 20,
+                8,
+                arcade.color.LIGHT_GRAY,
+                font_size=12,
+                anchor_x="right",
+            )
         else:
-            arcade.draw_text("Fim do trecho. [Enter] ou clique para voltar ao menu",
-                             self.window.width - 20, 8,
-                             arcade.color.LIGHT_GRAY, font_size=12, anchor_x="right")
+            arcade.draw_text(
+                "Fim do trecho. [Enter] ou clique para voltar ao menu",
+                self.window.width - 20,
+                8,
+                arcade.color.LIGHT_GRAY,
+                font_size=12,
+                anchor_x="right",
+            )
 
     def _advance_block(self) -> None:
         if self.ordem_index < len(self.dialogo_texto) - 1:
@@ -104,3 +171,10 @@ class TelaDialogos(arcade.View):
         elif symbol == arcade.key.ESCAPE:
             if hasattr(self.window, "menu_view") and self.window.menu_view:
                 self.window.show_view(self.window.menu_view)
+
+    def on_resize(self, width: int, height: int) -> None:
+        # atualiza e recria objetos de texto para respeitar a nova largura
+        self.largura = width
+        self.altura = height
+        if self.dialogo_texto:
+            self._criar_text_objs()

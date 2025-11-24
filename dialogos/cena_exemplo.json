@@ -1,0 +1,22 @@
+[
+  {
+    "personagem": "Narrador",
+    "fala": "Bem-vindo ao protótipo. Clique para continuar.",
+    "bg": "bg_quarto.png"
+  },
+  {
+    "personagem": "Ana",
+    "fala": "Oi! Eu sou a Ana. Esta é uma fala longa para testar quebra de linha automática. O texto deve começar no topo da caixa de diálogo e quebrar em múltiplas linhas conforme necessário.",
+    "sprite": "personagem_ana.png"
+  },
+  {
+    "personagem": "Ana",
+    "fala": "Agora vamos mudar o background também.",
+    "bg": "bg_quarto.png",
+    "sprite": "personagem_ana.png"
+  },
+  {
+    "personagem": "",
+    "fala": "Fim da cena de exemplo. Você pode criar novos arquivos JSON com o mesmo formato."
+  }
+]

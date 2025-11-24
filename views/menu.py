@@ -1,19 +1,27 @@
-# views/menu.py
-import os
+# views/menu.py — versão DEFINITIVA para Arcade 3.3.3 (sem nenhum draw_rectangle)
 import arcade
 from typing import Tuple, Optional, List
+
 from core.settings import DEFAULT_BG_PATH, LARGURA, ALTURA, COR_TEXTO
 from core.utils import safe_load_texture
 from ui.botao import Botao
-from views.jogo import TelaJogo  # import local para facilitar navegação
+from views.dialogos import TelaDialogos
+
 
 class TelaMenu(arcade.View):
-    def __init__(self, largura: int = LARGURA, altura: int = ALTURA, font_name: Optional[str] = None, bg_path: Optional[str] = DEFAULT_BG_PATH):
+    def __init__(
+        self,
+        largura: int = LARGURA,
+        altura: int = ALTURA,
+        font_name: Optional[str] = None,
+        bg_path: Optional[str] = DEFAULT_BG_PATH
+    ):
         super().__init__()
         self.largura = largura
         self.altura = altura
         self.bg_path = bg_path
         self.bg_texture = safe_load_texture(self.bg_path)
+
         self.font_name = font_name or "Arial"
         self.mouse_pos: Tuple[int, int] = (0, 0)
 
@@ -22,25 +30,29 @@ class TelaMenu(arcade.View):
         step = 110
         largura_btn = 380
         altura_btn = 80
+
         self.botoes: List[Botao] = [
             Botao("Novo Jogo", cx, start_y, largura_btn, altura_btn, acao="novo"),
             Botao("Carregar", cx, start_y - step, largura_btn, altura_btn, acao="carregar"),
-            Botao("Configurações", cx, start_y - 2 * step, largura_btn, altura_btn, acao="config"),
+            Botao("Configurações", cx, start_y - 2 * step, largura_btn, altura_btn, acao="config")
         ]
 
-        # Inicializa os objetos Text aqui para evitar AttributeError
+        # Textos
         self.title_text = arcade.Text(
             "Ecos do Passado",
-            self.largura // 2, self.altura - 120,
+            self.largura // 2,
+            self.altura - 120,
             color=COR_TEXTO,
             font_size=72,
             anchor_x="center",
             anchor_y="center",
             font_name=self.font_name
         )
+
         self.footer_text = arcade.Text(
             "Use o mouse para navegar",
-            20, 20,
+            20,
+            20,
             color=arcade.color.LIGHT_GRAY,
             font_size=14,
             anchor_x="left",
@@ -48,53 +60,87 @@ class TelaMenu(arcade.View):
             font_name=self.font_name
         )
 
-        # click_sound opcional: define como None por padrão (seguro)
-        self.click_sound = None
-
-    def on_show(self) -> None:
+    def on_show(self):
         arcade.set_background_color((0, 0, 0))
-        # tenta carregar som opcional (não interrompe se falhar)
-        try:
-            sound_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "asets", "imagens", "click.wav")
-            self.click_sound = arcade.load_sound(sound_path) if os.path.exists(sound_path) else None
-        except Exception:
-            self.click_sound = None
 
-    def on_draw(self) -> None:
-        self.clear()
+    # -------------------------------------------------------------------
+    # DESENHAR FUNDO — compatível com Arcade 3.3.3
+    # -------------------------------------------------------------------
+    def _draw_bg(self):
         if self.bg_texture:
-            arcade.draw_lrwh_rectangle_textured(0, 0, self.largura, self.altura, self.bg_texture)
-        else:
-            arcade.draw_lrbt_rectangle_filled(0, self.largura, 0, self.altura, (20, 20, 20))
+            try:
+                arcade.draw_lrwh_rectangle_textured(
+                    0, 0,
+                    self.largura,
+                    self.altura,
+                    self.bg_texture
+                )
+                return
+            except:
+                pass
 
-        # Atualiza posição antes de desenhar (caso a janela tenha sido redimensionada)
-        self.title_text.position = (self.largura // 2, self.altura - 120)
+        # fallback: preenchimento com draw_line
+        for y in range(0, self.altura, 4):
+            arcade.draw_line(0, y, self.largura, y, (20, 20, 20), 4)
+
+    # -------------------------------------------------------------------
+    # DESENHAR BOTÃO — usando APENAS draw_line
+    # -------------------------------------------------------------------
+    def _draw_button_rect(self, botao):
+        left = botao.cx - botao.width/2
+        right = botao.cx + botao.width/2
+        bottom = botao.cy - botao.height/2
+        top = botao.cy + botao.height/2
+
+        color = (80, 80, 80) if botao.hover else (40, 40, 40)
+
+        # preenchimento com linhas
+        y = int(bottom)
+        while y < int(top):
+            arcade.draw_line(left, y, right, y, color, 4)
+            y += 4
+
+        # contorno branco
+        arcade.draw_line(left, bottom, right, bottom, arcade.color.WHITE, 2)
+        arcade.draw_line(left, top, right, top, arcade.color.WHITE, 2)
+        arcade.draw_line(left, bottom, left, top, arcade.color.WHITE, 2)
+        arcade.draw_line(right, bottom, right, top, arcade.color.WHITE, 2)
+
+    def on_draw(self):
+        self.clear()
+
+        self._draw_bg()
+
         self.title_text.draw()
 
-        # botões
+        # desenhar botões
         for botao in self.botoes:
+            self._draw_button_rect(botao)
             botao.draw(self.mouse_pos, self.font_name)
 
-        # footer
-        self.footer_text.position = (20, 20)
         self.footer_text.draw()
 
-    def on_mouse_motion(self, x: float, y: float, dx: float, dy: float) -> None:
+    def on_mouse_motion(self, x, y, dx, dy):
         self.mouse_pos = (x, y)
         for b in self.botoes:
             b.update_hover(self.mouse_pos)
 
-    def on_mouse_press(self, x: float, y: float, button: int, modifiers: int) -> None:
+    def on_mouse_press(self, x, y, button, modifiers):
         for botao in self.botoes:
             if botao.contains(x, y):
+
                 if botao.acao == "novo":
-                    jogo = TelaJogo(self.largura, self.altura, font_name=self.font_name, bg_path=self.bg_path)
-                    jogo.window = self.window
-                    # guarda referência para voltar ao menu
+                    cena = TelaDialogos(
+                        largura=self.largura,
+                        altura=self.altura,
+                        arquivo_json="cena_exemplo.json",
+                        font_name=self.font_name
+                    )
                     self.window.menu_view = self
-                    self.window.show_view(jogo)
+                    self.window.show_view(cena)
+
                 elif botao.acao == "carregar":
-                    # placeholder
-                    print("Função de carregar ainda em desenvolvimento!")
+                    print("Função carregar ainda não implementada.")
+
                 elif botao.acao == "config":
-                    print("Abrir configurações (a implementar).")
+                    print("Configurações ainda não implementadas.")

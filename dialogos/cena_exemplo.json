@@ -2,18 +2,19 @@
   {
     "personagem": "Narrador",
     "fala": "Bem-vindo ao protótipo. Clique para continuar.",
-    "bg": "bg_quarto.png"
+    "bg": "fundo_ditadura.jpeg"
   },
   {
     "personagem": "Ana",
     "fala": "Oi! Eu sou a Ana. Esta é uma fala longa para testar quebra de linha automática. O texto deve começar no topo da caixa de diálogo e quebrar em múltiplas linhas conforme necessário.",
-    "sprite": "personagem_ana.png"
+    "sprite": "marcos_circulo.jpeg",
+    "bg": "fundo_ditadura.jpeg"
   },
   {
     "personagem": "Ana",
     "fala": "Agora vamos mudar o background também.",
-    "bg": "bg_quarto.png",
-    "sprite": "personagem_ana.png"
+    "bg": "fundo_ditadura.jpeg",
+    "sprite": "marcos_circulo.jpeg"
   },
   {
     "personagem": "",

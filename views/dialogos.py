@@ -1,219 +1,210 @@
-# views/dialogos.py
-import os
+# views/dialogos.py — versão universal para qualquer Arcade antigo
+import json
 import arcade
-from typing import List, Optional
+import traceback
+from pathlib import Path
+from typing import List, Dict, Optional
 from core.utils import safe_load_texture
-from core.settings import (
-    DEFAULT_BG_PATH, 
-    CLICK_SOUND_PATH,
-    DIALOG_BOX_HEIGHT,
-    DIALOG_MARGIN_LEFT,
-    DIALOG_MARGIN_RIGHT,
-    DIALOG_MARGIN_BOTTOM,
-    DIALOG_MARGIN_TOP
-)
+
+DIALOGOS_DIR = Path("dialogos")
+ASSETS_BG_DIR = Path("assets") / "bg"
+ASSETS_SPRITES_DIR = Path("assets") / "sprites"
 
 
 class TelaDialogos(arcade.View):
     def __init__(
         self,
-        largura: int = 1280,
-        altura: int = 720,
-        font_name: Optional[str] = None,
-        bg_path: Optional[str] = DEFAULT_BG_PATH,
+        largura: int = 800,
+        altura: int = 600,
+        arquivo_json: str = "cena_exemplo.json",
+        font_name: str = "Arial"
     ):
         super().__init__()
         self.largura = largura
         self.altura = altura
-        self.font_name = font_name or "Arial"
-        self.bg_path = bg_path
-        self.bg_texture = safe_load_texture(self.bg_path)
+        self.font_name = font_name
 
-        self.spritelist: arcade.SpriteList = arcade.SpriteList()
-        self.item1: Optional[arcade.Sprite] = None
-        self.ordem_itens: List[arcade.Sprite] = []
-        self.ordem_index: int = 0
-        self.dialogo_texto: List[str] = []
-        # garante que o atributo exista antes de on_show
-        self.dialogo_text_objs: List[arcade.Text] = []
-        self._carregar_textos_exemplo()
-        self.click = None
+        self.roteiro: List[Dict] = self._carregar_roteiro(arquivo_json)
+        self.index = 0
 
-    def _carregar_textos_exemplo(self) -> None:
-        blocos = [
-            ["Ache o filhote."],
-            [
-                "Enquanto explorava cautelosamente o terreno, o filhote percebeu algo se mexendo perto de um rio lamacento que cortava o lixão."
-            ],
-            [
-                "Era uma barata, deslizando lentamente entre os detritos e refletindo à luz cinzenta do dia. O gato, curioso e faminto, aproximou-se devagar..."
-            ],
-            [
-                "Entre o despejo do esgoto e restos de pneus, um peixe morto jazia à beira da água. Coberto de lama e moscas, era para o filhote uma refeição preciosa."
-            ],
-        ]
-        self.dialogo_texto = [" ".join(linhas).strip() for linhas in blocos]
-        print(f"DEBUG: Carregados {len(self.dialogo_texto)} blocos de diálogo em _carregar_textos_exemplo()")
+        self.bg_texture = None
+        self.sprite_texture = None
 
-    def _criar_text_objs(self) -> None:
-        """(Re)cria os objetos arcade.Text a partir de self.dialogo_texto,
-        usando a largura atual da janela para a quebra de linha."""
-        # Valida que há diálogos para criar
-        if not self.dialogo_texto:
-            print("AVISO: dialogo_texto está vazio em _criar_text_objs()")
-            self.dialogo_text_objs = []
-            return
-            
+        self.texto_atual = ""
+        self.personagem_atual = ""
+
+        # Caixa
+        self.box_margin = 24
+        self.box_height = int(self.altura * 0.28)
+        self.box_width = self.largura - 2 * self.box_margin
+        self.box_padding = 16
+        self.name_area_height = 32
+
+        self.box_left = self.box_margin
+        self.box_bottom = self.box_margin
+        self.box_top = self.box_bottom + self.box_height
+
+        self.name_text = arcade.Text(
+            "",
+            self.box_left + self.box_padding,
+            self.box_top - self.box_padding,
+            arcade.color.WHITE,
+            18,
+            anchor_y="top",
+            font_name=self.font_name
+        )
+
+        self.dialog_text = arcade.Text(
+            "",
+            self.box_left + self.box_padding,
+            self.box_top - self.box_padding - self.name_area_height,
+            arcade.color.WHITE,
+            16,
+            width=self.box_width - 2 * self.box_padding,
+            align="left",
+            multiline=True,
+            anchor_y="top",
+            font_name=self.font_name
+        )
+
+        if self.roteiro:
+            self._aplicar_fala(self.roteiro[0])
+
+    def _carregar_roteiro(self, arquivo_json: str):
+        caminho = DIALOGOS_DIR / arquivo_json
+        if not caminho.exists():
+            print("[Dialogos] JSON não encontrado:", caminho)
+            return []
         try:
-            # Calcula largura disponível respeitando as margens configuradas
-            window_width = self.window.width if self.window else self.largura
-            largura_disponivel = max(100, window_width - DIALOG_MARGIN_LEFT - DIALOG_MARGIN_RIGHT)
-            
-            # Posição inicial (x,y) dentro da caixa de diálogo usando as margens configuradas
-            x = DIALOG_MARGIN_LEFT
-            y = DIALOG_MARGIN_BOTTOM
-            
-            self.dialogo_text_objs = [
-                arcade.Text(
-                    txt,
-                    x,
-                    y,
-                    arcade.color.WHITE,
-                    font_size=18,
-                    width=largura_disponivel,
-                    anchor_x="left",
-                    anchor_y="bottom",
-                    font_name=self.font_name,
-                )
-                for txt in self.dialogo_texto
-            ]
-            print(f"DEBUG: Criados {len(self.dialogo_text_objs)} objetos de texto de diálogo")
-        except Exception as e:
-            print(f"ERRO ao criar objetos de texto: {e}")
-            import traceback
+            with open(caminho, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
             traceback.print_exc()
-            self.dialogo_text_objs = []
+            return []
 
-    def on_show(self) -> None:
-        arcade.set_background_color((10, 10, 10))
-        self.spritelist = arcade.SpriteList()
+    def _aplicar_fala(self, fala_obj: Dict):
+        try:
+            self.personagem_atual = fala_obj.get("personagem", "")
+            self.texto_atual = fala_obj.get("fala", "")
 
-        # Valida que os diálogos foram carregados
-        if not self.dialogo_texto:
-            print("AVISO: dialogo_texto está vazio em on_show(). Carregando textos de exemplo...")
-            self._carregar_textos_exemplo()
+            self.name_text.text = self.personagem_atual
+            self.dialog_text.text = self.texto_atual
 
-        # background como sprite (se existir)
+            # BG
+            bg = fala_obj.get("bg")
+            if bg:
+                path = ASSETS_BG_DIR / bg
+                if path.exists():
+                    self.bg_texture = safe_load_texture(str(path))
+                else:
+                    print("[Dialogos] BG não encontrado:", path)
+                    self.bg_texture = None
+            else:
+                self.bg_texture = None
+
+            # SPRITE
+            sp = fala_obj.get("sprite")
+            if sp:
+                path = ASSETS_SPRITES_DIR / sp
+                if path.exists():
+                    self.sprite_texture = safe_load_texture(str(path))
+                else:
+                    print("[Dialogos] Sprite não encontrado:", path)
+                    self.sprite_texture = None
+            else:
+                self.sprite_texture = None
+
+        except Exception:
+            traceback.print_exc()
+
+    # ------------------------------------------------------------------
+    # FUNÇÃO DE DESENHO DO FUNDO — usando apenas draw_line
+    # ------------------------------------------------------------------
+    def _draw_bg(self):
         if self.bg_texture:
             try:
-                fundo = arcade.Sprite(
-                    self.bg_path,
-                    scale=max(self.window.width / 1280, self.window.height / 720),
-                    center_x=self.window.width // 2,
-                    center_y=self.window.height // 2,
+                # Desenhar textura manualmente (super antigo e simples)
+                texture = self.bg_texture
+                w = texture.width
+                h = texture.height
+                scale_x = self.largura / w
+                scale_y = self.altura / h
+                sx = min(scale_x, scale_y)
+
+                arcade.draw_scaled_texture_rectangle(
+                    self.largura // 2,
+                    self.altura // 2,
+                    texture,
+                    sx
                 )
-                self.spritelist.append(fundo)
-            except Exception:
-                # se falhar ao criar o sprite de background, apenas ignoramos
+                return
+            except:
                 pass
 
-        # cria um item interativo (placeholder) - sprite sólido
-        self.item1 = arcade.SpriteSolidColor(56, 56, arcade.color.BRONZE)
-        self.item1.center_x = self.window.width // 2
-        self.item1.center_y = 150
-        self.spritelist.append(self.item1)
+        # fallback: fundo preto
+        for y in range(0, self.altura, 4):
+            arcade.draw_line(0, y, self.largura, y, arcade.color.BLACK, 4)
 
-        self.ordem_itens = [self.item1]
-        self.ordem_index = 0
+    # ------------------------------------------------------------------
+    # DESENHA A CAIXA DO DIÁLOGO — usando apenas draw_line
+    # ------------------------------------------------------------------
+    def _draw_dialog_box(self):
+        left = self.box_left
+        right = self.box_left + self.box_width
+        top = self.box_top
+        bottom = self.box_bottom
 
-        # som opcional
+        # preenchimento semi-transparente
+        for y in range(int(bottom), int(top), 4):
+            arcade.draw_line(left, y, right, y, (0, 0, 0, 180), 4)
+
+        # contorno
+        arcade.draw_line(left, bottom, right, bottom, arcade.color.WHITE, 2)
+        arcade.draw_line(left, top, right, top, arcade.color.WHITE, 2)
+        arcade.draw_line(left, bottom, left, top, arcade.color.WHITE, 2)
+        arcade.draw_line(right, bottom, right, top, arcade.color.WHITE, 2)
+
+    # ------------------------------------------------------------------
+    # DESENHA SPRITE — usando scaled_texture_rectangle (super antigo)
+    # ------------------------------------------------------------------
+    def _draw_sprite(self):
+        if not self.sprite_texture:
+            return
+
         try:
-            self.click = arcade.load_sound(CLICK_SOUND_PATH) if os.path.exists(CLICK_SOUND_PATH) else None
+            tex = self.sprite_texture
+            w = tex.width
+            h = tex.height
+            scale = min(1.0, (self.largura * 0.45) / w)
+            draw_h = int(h * scale)
+            y = int(self.box_top + draw_h * 0.35)
+
+            arcade.draw_scaled_texture_rectangle(
+                self.largura // 2,
+                y,
+                tex,
+                scale
+            )
         except Exception:
-            self.click = None
+            traceback.print_exc()
 
-        # (re)cria os Text objects para os diálogos agora que temos acesso à janela
-        self._criar_text_objs()
-        
-        # Valida que os text objects foram criados
-        if not self.dialogo_text_objs:
-            print("ERRO: dialogo_text_objs ainda está vazio após _criar_text_objs()")
-
-    def on_draw(self) -> None:
+    # ------------------------------------------------------------------
+    def on_draw(self):
         self.clear()
-        self.spritelist.draw()
 
-        # Desenha a caixa de diálogo usando a altura configurada
-        # left, right, bottom, top
-        arcade.draw_lrbt_rectangle_filled(0, self.window.width, 0, DIALOG_BOX_HEIGHT, (0, 0, 0, 200))
+        self._draw_bg()
+        self._draw_dialog_box()
+        self._draw_sprite()
 
-        # Garantir que os text objects existam (caso on_draw seja chamado antes de on_show)
-        if not self.dialogo_text_objs and self.dialogo_texto:
-            print("AVISO: on_draw chamado antes de on_show. Criando text objects...")
-            self._criar_text_objs()
+        if self.personagem_atual:
+            self.name_text.draw()
 
-        # desenha o bloco atual via Text objeto pré-criado
-        if self.dialogo_text_objs:
-            txt_obj = self.dialogo_text_objs[self.ordem_index]
-            # atualiza largura caso a janela tenha mudado, respeitando as margens
-            txt_obj.width = max(100, self.window.width - DIALOG_MARGIN_LEFT - DIALOG_MARGIN_RIGHT)
-            # a posição x/y foi definida na criação; redesenha
-            txt_obj.draw()
+        self.dialog_text.draw()
+
+    def on_mouse_press(self, x, y, button, modifiers):
+        self.index += 1
+        if self.index < len(self.roteiro):
+            self._aplicar_fala(self.roteiro[self.index])
         else:
-            # fallback mínimo (não deveria ocorrer se on_show rodou corretamente)
-            arcade.draw_text(
-                "Sem diálogos carregados.",
-                DIALOG_MARGIN_LEFT,
-                DIALOG_MARGIN_BOTTOM,
-                arcade.color.WHITE,
-                font_size=18,
-                width=max(100, self.window.width - DIALOG_MARGIN_LEFT - DIALOG_MARGIN_RIGHT),
-                anchor_x="left",
-                anchor_y="bottom",
-                font_name=self.font_name,
-            )
-
-        if self.ordem_index < len(self.dialogo_texto) - 1:
-            arcade.draw_text(
-                "Clique ou pressione [Enter] para continuar.",
-                self.window.width - 20,
-                8,
-                arcade.color.LIGHT_GRAY,
-                font_size=12,
-                anchor_x="right",
-            )
-        else:
-            arcade.draw_text(
-                "Fim do trecho. [Enter] ou clique para voltar ao menu",
-                self.window.width - 20,
-                8,
-                arcade.color.LIGHT_GRAY,
-                font_size=12,
-                anchor_x="right",
-            )
-
-    def _advance_block(self) -> None:
-        if self.ordem_index < len(self.dialogo_texto) - 1:
-            self.ordem_index += 1
-        else:
-            if hasattr(self.window, "menu_view") and self.window.menu_view:
+            if hasattr(self.window, "menu_view"):
                 self.window.show_view(self.window.menu_view)
-
-    def on_mouse_press(self, x: int, y: int, button, modifiers) -> None:
-        if self.click and self.item1 and self.item1.collides_with_point((x, y)):
-            arcade.play_sound(self.click)
-        self._advance_block()
-
-    def on_key_press(self, symbol, modifiers) -> None:
-        if symbol in (arcade.key.SPACE, arcade.key.ENTER, arcade.key.RETURN):
-            self._advance_block()
-        elif symbol == arcade.key.ESCAPE:
-            if hasattr(self.window, "menu_view") and self.window.menu_view:
-                self.window.show_view(self.window.menu_view)
-
-    def on_resize(self, width: int, height: int) -> None:
-        # atualiza e recria objetos de texto para respeitar a nova largura
-        self.largura = width
-        self.altura = height
-        if self.dialogo_texto:
-            self._criar_text_objs()

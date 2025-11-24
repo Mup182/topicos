@@ -12,10 +12,6 @@ def safe_load_texture(path: Optional[str]) -> Optional[arcade.Texture]:
         return None
 
 def fit_font_size_measure(text: str, max_width: int, font_name: str, start_size: int = 36, min_size: int = 10) -> int:
-    """
-    Ajusta um tamanho de fonte para que o texto caiba em `max_width`.
-    Usa arcade.get_text_image_dimensions quando disponível; caso contrário, usa uma estimativa.
-    """
     size = start_size
     has_measure = hasattr(arcade, "get_text_image_dimensions")
     while size >= min_size:

@@ -1,70 +1,70 @@
-# ui/botao.py
-from typing import Tuple, Optional
+# ui/botao.py — versão universal compatível com Arcade antigo
 import arcade
-from core.settings import COR_BOTAO, COR_HOVER, COR_TEXTO, COR_SOMBRA
-from core.utils import fit_font_size_measure
+from typing import Tuple
+
 
 class Botao:
-    """Botão simples para menus. Mantém centro, tamanho base e efeito hover."""
-    def __init__(self, texto: str, center_x: int, center_y: int, largura: int, altura: int, acao: Optional[str] = None):
-        self.texto = texto
-        self.center_x = center_x
-        self.center_y = center_y
-        self.base_largura = largura
-        self.base_altura = altura
+    def __init__(self, label: str, cx: int, cy: int, width: int, height: int, acao: str = ""):
+        self.label = label
+        self.cx = cx
+        self.cy = cy
+        self.width = width
+        self.height = height
         self.acao = acao
         self.hover = False
-        self.hover_scale = 1.0
-
-    def update_hover(self, mouse_pos: Tuple[int, int]) -> None:
-        mx, my = mouse_pos
-        half_w = (self.base_largura * self.hover_scale) / 2
-        half_h = (self.base_altura * self.hover_scale) / 2
-        left = self.center_x - half_w
-        right = self.center_x + half_w
-        bottom = self.center_y - half_h
-        top = self.center_y + half_h
-        hovering = (left <= mx <= right) and (bottom <= my <= top)
-        self.hover = hovering
-        target = 1.06 if hovering else 1.0
-        # suaviza a transição
-        self.hover_scale += (target - self.hover_scale) * 0.25
-
-    def draw(self, mouse_pos: Tuple[int, int], font_name: str) -> None:
-        """Desenha o botão. Observação: usa draw_text (padrão arcade)."""
-        self.update_hover(mouse_pos)
-        scale = self.hover_scale
-        largura = int(self.base_largura * scale)
-        altura = int(self.base_altura * scale)
-        half_w = largura / 2
-        half_h = altura / 2
-        left = self.center_x - half_w
-        right = self.center_x + half_w
-        bottom = self.center_y - half_h
-        top = self.center_y + half_h
-
-        cor = COR_HOVER if self.hover else COR_BOTAO
-
-        # A versão do arcade que você usa exige draw_lrbt_rectangle_filled(left, right, bottom, top, color)
-        arcade.draw_lrbt_rectangle_filled(left, right, bottom, top, cor)
-
-        # Ajusta tamanho da fonte para caber no botão
-        font_size = fit_font_size_measure(self.texto, largura, font_name, start_size=36, min_size=12)
-
-        # Sombra e texto
-        arcade.draw_text(self.texto,
-                         self.center_x + 2, self.center_y - font_size * 0.05,
-                         COR_SOMBRA, font_size=font_size,
-                         anchor_x="center", anchor_y="center", font_name=font_name)
-        arcade.draw_text(self.texto,
-                         self.center_x, self.center_y - font_size * 0.05,
-                         COR_TEXTO, font_size=font_size,
-                         anchor_x="center", anchor_y="center", font_name=font_name)
 
     def contains(self, x: int, y: int) -> bool:
-        largura = int(self.base_largura * self.hover_scale)
-        altura = int(self.base_altura * self.hover_scale)
-        half_w = largura / 2
-        half_h = altura / 2
-        return (self.center_x - half_w <= x <= self.center_x + half_w) and \
-               (self.center_y - half_h <= y <= self.center_y + half_h)
+        left = self.cx - self.width / 2
+        right = self.cx + self.width / 2
+        bottom = self.cy - self.height / 2
+        top = self.cy + self.height / 2
+        return left <= x <= right and bottom <= y <= top
+
+    def update_hover(self, mouse_pos: Tuple[int, int]):
+        self.hover = self.contains(*mouse_pos)
+
+    def draw_rect(self, left, right, top, bottom, color):
+        """Desenha um retângulo usando linhas (compatível com Arcade 3.3.3)."""
+        step = 4
+        for y in range(int(bottom), int(top), step):
+            arcade.draw_line(int(left), y, int(right), y, color, step)
+
+    def draw_outline(self, left, right, top, bottom, color):
+        """Desenha o contorno usando draw_line."""
+        # Topo
+        arcade.draw_line(left, top, right, top, color, 2)
+        # Base
+        arcade.draw_line(left, bottom, right, bottom, color, 2)
+        # Esquerda
+        arcade.draw_line(left, bottom, left, top, color, 2)
+        # Direita
+        arcade.draw_line(right, bottom, right, top, color, 2)
+
+    def draw(self, mouse_pos: Tuple[int, int], font_name: str = "Arial"):
+        left = self.cx - self.width / 2
+        right = self.cx + self.width / 2
+        top = self.cy + self.height / 2
+        bottom = self.cy - self.height / 2
+
+        bg_normal = (60, 60, 70)
+        bg_hover = (110, 110, 140)
+        bg = bg_hover if self.hover else bg_normal
+
+        # Retângulo preenchido com linhas
+        self.draw_rect(left, right, top, bottom, bg)
+
+        # Contorno
+        self.draw_outline(left, right, top, bottom, arcade.color.WHITE)
+
+        # Texto centralizado
+        text = arcade.Text(
+            self.label,
+            self.cx,
+            self.cy,
+            arcade.color.WHITE,
+            22,
+            anchor_x="center",
+            anchor_y="center",
+            font_name=font_name
+        )
+        text.draw()

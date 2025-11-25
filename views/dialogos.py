@@ -1,9 +1,10 @@
-# views/dialogos.py — versão universal para qualquer Arcade antigo
+# views/dialogos.py — compatível 100% com Arcade 2.6.17
+
 import json
 import arcade
 import traceback
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import List, Dict
 from core.utils import safe_load_texture
 
 DIALOGOS_DIR = Path("dialogos")
@@ -27,13 +28,12 @@ class TelaDialogos(arcade.View):
         self.roteiro: List[Dict] = self._carregar_roteiro(arquivo_json)
         self.index = 0
 
-        self.bg_texture = None
-        self.sprite_texture = None
+        self.bg_sprite = None
+        self.char_sprite = None
 
-        self.texto_atual = ""
         self.personagem_atual = ""
+        self.texto_atual = ""
 
-        # Caixa
         self.box_margin = 24
         self.box_height = int(self.altura * 0.28)
         self.box_width = self.largura - 2 * self.box_margin
@@ -71,16 +71,44 @@ class TelaDialogos(arcade.View):
             self._aplicar_fala(self.roteiro[0])
 
     def _carregar_roteiro(self, arquivo_json: str):
-        caminho = DIALOGOS_DIR / arquivo_json
-        if not caminho.exists():
-            print("[Dialogos] JSON não encontrado:", caminho)
-            return []
         try:
-            with open(caminho, "r", encoding="utf-8") as f:
+            with open(DIALOGOS_DIR / arquivo_json, "r", encoding="utf-8") as f:
                 return json.load(f)
-        except Exception:
+        except:
             traceback.print_exc()
             return []
+
+    def _criar_sprite_bg(self, path: Path):
+        try:
+            sprite = arcade.Sprite(str(path), scale=1.0)
+            sprite.center_x = self.largura // 2
+            sprite.center_y = self.altura // 2
+
+            sx = self.largura / sprite.texture.width
+            sy = self.altura / sprite.texture.height
+            sprite.scale = min(sx, sy)
+
+            return sprite
+        except:
+            traceback.print_exc()
+            return None
+
+    def _criar_sprite_char(self, path: Path):
+        try:
+            sprite = arcade.Sprite(str(path), scale=1.0)
+
+            # novo cálculo: garante que nunca sai da tela
+            base_width = self.largura * 0.30
+            scale = base_width / sprite.texture.width
+            sprite.scale = scale
+
+            sprite.center_x = int(self.largura * 0.82)
+            sprite.center_y = int(self.box_top + sprite.height * 0.45)
+
+            return sprite
+        except:
+            traceback.print_exc()
+            return None
 
     def _aplicar_fala(self, fala_obj: Dict):
         try:
@@ -90,115 +118,48 @@ class TelaDialogos(arcade.View):
             self.name_text.text = self.personagem_atual
             self.dialog_text.text = self.texto_atual
 
-            # BG
+            # Fundo
             bg = fala_obj.get("bg")
             if bg:
-                path = ASSETS_BG_DIR / bg
-                if path.exists():
-                    self.bg_texture = safe_load_texture(str(path))
-                else:
-                    print("[Dialogos] BG não encontrado:", path)
-                    self.bg_texture = None
-            else:
-                self.bg_texture = None
+                p = ASSETS_BG_DIR / bg
+                self.bg_sprite = self._criar_sprite_bg(p) if p.exists() else None
 
-            # SPRITE
+            # Sprite do personagem
             sp = fala_obj.get("sprite")
             if sp:
-                path = ASSETS_SPRITES_DIR / sp
-                if path.exists():
-                    self.sprite_texture = safe_load_texture(str(path))
-                else:
-                    print("[Dialogos] Sprite não encontrado:", path)
-                    self.sprite_texture = None
+                p = ASSETS_SPRITES_DIR / sp
+                self.char_sprite = self._criar_sprite_char(p) if p.exists() else None
             else:
-                self.sprite_texture = None
+                self.char_sprite = None
 
-        except Exception:
+        except:
             traceback.print_exc()
 
-    # ------------------------------------------------------------------
-    # FUNÇÃO DE DESENHO DO FUNDO — usando apenas draw_line
-    # ------------------------------------------------------------------
-    def _draw_bg(self):
-        if self.bg_texture:
-            try:
-                # Desenhar textura manualmente (super antigo e simples)
-                texture = self.bg_texture
-                w = texture.width
-                h = texture.height
-                scale_x = self.largura / w
-                scale_y = self.altura / h
-                sx = min(scale_x, scale_y)
-
-                arcade.draw_scaled_texture_rectangle(
-                    self.largura // 2,
-                    self.altura // 2,
-                    texture,
-                    sx
-                )
-                return
-            except:
-                pass
-
-        # fallback: fundo preto
-        for y in range(0, self.altura, 4):
-            arcade.draw_line(0, y, self.largura, y, arcade.color.BLACK, 4)
-
-    # ------------------------------------------------------------------
-    # DESENHA A CAIXA DO DIÁLOGO — usando apenas draw_line
-    # ------------------------------------------------------------------
     def _draw_dialog_box(self):
-        left = self.box_left
-        right = self.box_left + self.box_width
-        top = self.box_top
-        bottom = self.box_bottom
+        l, r = self.box_left, self.box_left + self.box_width
+        b, t = self.box_bottom, self.box_top
 
-        # preenchimento semi-transparente
-        for y in range(int(bottom), int(top), 4):
-            arcade.draw_line(left, y, right, y, (0, 0, 0, 180), 4)
+        for y in range(int(b), int(t), 4):
+            arcade.draw_line(l, y, r, y, (0, 0, 0, 180), 4)
 
-        # contorno
-        arcade.draw_line(left, bottom, right, bottom, arcade.color.WHITE, 2)
-        arcade.draw_line(left, top, right, top, arcade.color.WHITE, 2)
-        arcade.draw_line(left, bottom, left, top, arcade.color.WHITE, 2)
-        arcade.draw_line(right, bottom, right, top, arcade.color.WHITE, 2)
+        arcade.draw_line(l, b, r, b, arcade.color.WHITE, 2)
+        arcade.draw_line(l, t, r, t, arcade.color.WHITE, 2)
+        arcade.draw_line(l, b, l, t, arcade.color.WHITE, 2)
+        arcade.draw_line(r, b, r, t, arcade.color.WHITE, 2)
 
-    # ------------------------------------------------------------------
-    # DESENHA SPRITE — usando scaled_texture_rectangle (super antigo)
-    # ------------------------------------------------------------------
-    def _draw_sprite(self):
-        if not self.sprite_texture:
-            return
-
-        try:
-            tex = self.sprite_texture
-            w = tex.width
-            h = tex.height
-            scale = min(1.0, (self.largura * 0.45) / w)
-            draw_h = int(h * scale)
-            y = int(self.box_top + draw_h * 0.35)
-
-            arcade.draw_scaled_texture_rectangle(
-                self.largura // 2,
-                y,
-                tex,
-                scale
-            )
-        except Exception:
-            traceback.print_exc()
-
-    # ------------------------------------------------------------------
     def on_draw(self):
         self.clear()
 
-        self._draw_bg()
+        if self.bg_sprite:
+            self.bg_sprite.draw()
+
+        if self.char_sprite:
+            self.char_sprite.draw()
+
         self._draw_dialog_box()
-        self._draw_sprite()
 
         if self.personagem_atual:
             self.name_text.draw()
-
         self.dialog_text.draw()
 
     def on_mouse_press(self, x, y, button, modifiers):

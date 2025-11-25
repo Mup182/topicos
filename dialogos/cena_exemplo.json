@@ -1,23 +1,26 @@
 [
   {
-    "personagem": "Narrador",
-    "fala": "Bem-vindo ao protótipo. Clique para continuar.",
-    "bg": "fundo_ditadura.jpeg"
-  },
-  {
-    "personagem": "Ana",
-    "fala": "Oi! Eu sou a Ana. Esta é uma fala longa para testar quebra de linha automática. O texto deve começar no topo da caixa de diálogo e quebrar em múltiplas linhas conforme necessário.",
-    "sprite": "marcos_circulo.jpeg",
-    "bg": "fundo_ditadura.jpeg"
-  },
-  {
-    "personagem": "Ana",
-    "fala": "Agora vamos mudar o background também.",
+    "personagem": "Marcos",
+    "fala": "O sol escaldante de Goiás dourava o campo seco, e o vento levantava poeira sobre os chapadões.",
     "bg": "fundo_ditadura.jpeg",
     "sprite": "marcos_circulo.jpeg"
   },
   {
-    "personagem": "",
-    "fala": "Fim da cena de exemplo. Você pode criar novos arquivos JSON com o mesmo formato."
+    "personagem": "Marcos",
+    "fala": "Eu estava liderando uma pequena expedição arqueológica, vocês sabem, meu trabalho como professor e pesquisador de História do Brasil.",
+    "sprite": "marcos_circulo.jpeg",
+    "bg": "fundo_ditadura.jpeg"
+  },
+  {
+    "personagem": "Marcos",
+    "fala": "Meu olhar curioso buscava vestígios do passado indígena — mas eu mal podia imaginar que estava prestes a encontrar algo muito mais antigo do que qualquer registro conhecido.",
+    "bg": "fundo_ditadura.jpeg",
+    "sprite": "marcos_circulo.jpeg"
+  },
+  {
+    "personagem": "Marcos",
+    "fala": "Enquanto meus assistentes recolhiam fragmentos de cerâmica, avistei algo parcialmente enterrado sob uma figueira retorcida: um totem de pedra negra, coberto por símbolos misteriosos. A superfície parecia pulsar levemente, como se respirasse.",
+    "sprite": "marcos_circulo.jpeg",
+    "bg": "fundo_ditadura.jpeg"
   }
 ]

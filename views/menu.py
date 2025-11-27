@@ -144,3 +144,8 @@ class TelaMenu(arcade.View):
 
                 elif botao.acao == "config":
                     print("Configurações ainda não implementadas.")
+
+    def on_key_press(self, key, modifiers):
+      if key == arcade.key.ESCAPE:
+        arcade.close_window()
+

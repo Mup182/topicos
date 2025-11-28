@@ -32,6 +32,10 @@ class TelaDialogos(arcade.View):
         self.bg_sprite: Optional[arcade.Sprite] = None
         self.char_sprite: Optional[arcade.Sprite] = None
 
+        # posição do char (decidida pelo nome do arquivo do sprite)
+        # valores: "right" ou "top"
+        self.char_position: str = "right"
+
         # conteúdo atual
         self.personagem_atual = ""
         self.texto_atual = ""
@@ -86,7 +90,6 @@ class TelaDialogos(arcade.View):
             self.largura = int(self.window.width)
             self.altura = int(self.window.height)
         except Exception:
-            # fallback para valores já existentes
             pass
 
         # recalcula box e textos
@@ -160,6 +163,15 @@ class TelaDialogos(arcade.View):
         try:
             sprite = arcade.Sprite(str(path), scale=1.0)
             self.char_sprite = sprite
+            # decide posição com base no nome do arquivo (case-insensitive)
+            name = path.name.lower()
+            if "pedro" in name:
+                self.char_position = "top"
+            elif "marcos" in name:
+                self.char_position = "right"
+            else:
+                # default à direita
+                self.char_position = "right"
             self._rescale_char()
             return sprite
         except Exception:
@@ -168,22 +180,32 @@ class TelaDialogos(arcade.View):
 
     def _rescale_char(self):
         try:
-           if not self.char_sprite or not self.char_sprite.texture:
-              return
+            if not self.char_sprite or not self.char_sprite.texture:
+                return
 
-           tex = self.char_sprite.texture
+            tex = self.char_sprite.texture
 
-        # sprite ocupa cerca de 22% da largura da tela
-           target_w = int(self.largura * 0.22)
-           scale = target_w / tex.width
-           self.char_sprite.scale = scale
-
-        # posição: EXACTAMENTE ao lado direito da caixa de diálogo
-           margin = 20
-
-           self.char_sprite.center_x = self.box_left + self.box_width + margin + (self.char_sprite.width // 2)
-           self.char_sprite.center_y = self.box_bottom + (self.box_height // 2)
-
+            if self.char_position == "top":
+                # ocupa cerca de 30% da largura quando em cima (visível em primeiro plano)
+                target_w = int(self.largura * 0.30)
+                scale = target_w / tex.width
+                self.char_sprite.scale = scale
+                # posiciona centralizado horizontalmente, acima da caixa (frente da tela)
+                cx = self.largura // 2
+                cy = int(self.box_top + (self.char_sprite.height * 0.20))
+                self.char_sprite.center_x = cx
+                self.char_sprite.center_y = cy
+            else:
+                # posição 'right': ocupa cerca de 22% da largura da tela
+                target_w = int(self.largura * 0.22)
+                scale = target_w / tex.width
+                self.char_sprite.scale = scale
+                # posição: EXACTAMENTE ao lado direito da caixa de diálogo
+                margin = 20
+                # center_x = box_right + margin + half sprite width
+                box_right = self.box_left + self.box_width
+                self.char_sprite.center_x = box_right + margin + (self.char_sprite.width // 2)
+                self.char_sprite.center_y = self.box_bottom + (self.box_height // 2)
         except Exception:
             traceback.print_exc()
 
@@ -209,7 +231,7 @@ class TelaDialogos(arcade.View):
             else:
                 self.bg_sprite = None
 
-            # SPRITE DO PERSONAGEM (carrega e posiciona)
+            # SPRITE DO PERSONAGEM (carrega e posiciona) ← agora DECIDIDO PELO NOME DO ARQUIVO
             sprite_name = fala_obj.get("sprite")
             if sprite_name:
                 sp_path = ASSETS_SPRITES_DIR / sprite_name
@@ -229,32 +251,29 @@ class TelaDialogos(arcade.View):
     # ------------------------------
     def _recalc_layout(self):
         try:
-          self.box_bottom = self.box_margin
-          self.box_top = self.box_bottom + int(self.altura * 0.28)
+            self.box_bottom = self.box_margin
+            self.box_top = self.box_bottom + int(self.altura * 0.28)
 
-        # reserva espaço à direita somente se houver sprite
-          reserved_right = 0
-          if self.char_sprite:
-            tex = self.char_sprite.texture
-            if tex:
-                reserved_right = int(self.largura * 0.25)  # mais seguro, garante espaço
+            # reserva espaço à direita somente se houver sprite posicionado à direita
+            reserved_right = 0
+            if self.char_sprite and self.char_position == "right":
+                # garantir espaço mínimo para o sprite
+                reserved_right = int(self.largura * 0.25)
 
-        # caixa reduzida para caber sprite ao lado
-          self.box_width = max(200, self.largura - 2 * self.box_margin - reserved_right)
+            # caixa reduzida para caber sprite ao lado
+            self.box_width = max(200, self.largura - 2 * self.box_margin - reserved_right)
 
-        # texto acompanha nova largura
-          self.dialog_text.width = self.box_width - 2 * self.box_padding
+            # texto acompanha nova largura
+            self.dialog_text.width = self.box_width - 2 * self.box_padding
 
-        # reposiciona textos
-          self.name_text.x = self.box_left + self.box_padding
-          self.name_text.y = self.box_top - self.box_padding
+            # reposiciona textos
+            self.name_text.x = self.box_left + self.box_padding
+            self.name_text.y = self.box_top - self.box_padding
 
-          self.dialog_text.x = self.name_text.x
-          self.dialog_text.y = self.name_text.y - self.name_area_height
-
+            self.dialog_text.x = self.name_text.x
+            self.dialog_text.y = self.name_text.y - self.name_area_height
         except Exception:
-         traceback.print_exc()
-
+            traceback.print_exc()
 
     # ------------------------------
     def _draw_dialog_box(self):
@@ -299,13 +318,18 @@ class TelaDialogos(arcade.View):
                 # fallback defensivo: se Sprite.draw falhar, desenhar textura manualmente
                 try:
                     tex = self.bg_sprite.texture
-                    arcade.draw_texture_rect(tex, 0, 0, self.largura, self.altura, 0)  # alguns ambientes têm essa função
+                    # draw_texture_rect signature varies — fallback paliativo:
+                    if hasattr(arcade, "draw_texture_rect"):
+                        arcade.draw_texture_rect(tex, 0, 0, self.largura, self.altura, 0)
+                    else:
+                        # desenha linhas pretas como último recurso
+                        for y in range(0, self.altura, 4):
+                            arcade.draw_line(0, y, self.largura, y, arcade.color.BLACK, 4)
                 except Exception:
-                    # último recurso: preencher com retângulo/linhas
                     for y in range(0, self.altura, 4):
                         arcade.draw_line(0, y, self.largura, y, arcade.color.BLACK, 4)
 
-        # desenha sprite do personagem (à direita)
+        # desenha sprite do personagem (à direita ou no topo)
         if self.char_sprite:
             try:
                 self.char_sprite.draw()
@@ -317,7 +341,8 @@ class TelaDialogos(arcade.View):
                     cy = int(self.char_sprite.center_y)
                     w = int(self.char_sprite.width)
                     h = int(self.char_sprite.height)
-                    arcade.draw_texture_rect(tex, cx - w // 2, cy - h // 2, w, h, 0)
+                    if hasattr(arcade, "draw_texture_rect"):
+                        arcade.draw_texture_rect(tex, cx - w // 2, cy - h // 2, w, h, 0)
                 except Exception:
                     pass
 

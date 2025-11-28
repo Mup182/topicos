@@ -1,26 +1,31 @@
 [
   {
     "personagem": "Marcos",
-    "fala": "O sol escaldante de Goiás dourava o campo seco, e o vento levantava poeira sobre os chapadões.",
+    "fala": "Eu estava analisando peças antigas em um campo no interior de Goiás.",
     "bg": "fundo_ditadura.jpeg",
-    "sprite": "marcos_circulo.jpeg"
+    "sprite": "marcos.jpeg",
+    "sprite": "pedro.jpeg"
+    
   },
   {
     "personagem": "Marcos",
-    "fala": "Eu estava liderando uma pequena expedição arqueológica, vocês sabem, meu trabalho como professor e pesquisador de História do Brasil.",
-    "sprite": "marcos_circulo.jpeg",
-    "bg": "fundo_ditadura.jpeg"
+    "fala": "Entre fragmentos comuns, encontrei um pequeno objeto metálico, coberto de escrituras estranhas.",
+    "sprite": "marcos.jpeg",
+    "bg": "fundo_ditadura.jpeg",
+    "sprite": "pedro.jpeg"
   },
   {
     "personagem": "Marcos",
-    "fala": "Meu olhar curioso buscava vestígios do passado indígena — mas eu mal podia imaginar que estava prestes a encontrar algo muito mais antigo do que qualquer registro conhecido.",
+    "fala": "Quando toquei nele, uma luz forte tomou conta da minha visão.",
     "bg": "fundo_ditadura.jpeg",
-    "sprite": "marcos_circulo.jpeg"
+    "sprite": "marcos.jpeg",
+    "sprite": "pedro.jpeg"
   },
   {
     "personagem": "Marcos",
     "fala": "Enquanto meus assistentes recolhiam fragmentos de cerâmica, avistei algo parcialmente enterrado sob uma figueira retorcida: um totem de pedra negra, coberto por símbolos misteriosos. A superfície parecia pulsar levemente, como se respirasse.",
-    "sprite": "marcos_circulo.jpeg",
-    "bg": "fundo_ditadura.jpeg"
+    "sprite": "marcos.jpeg",
+    "bg": "fundo_ditadura.jpeg",
+    "sprite": "pedro.jpeg"
   }
 ]

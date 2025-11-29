@@ -2,30 +2,332 @@
   {
     "personagem": "Marcos",
     "fala": "Eu estava analisando peças antigas em um campo no interior de Goiás.",
-    "bg": "fundo_ditadura.jpeg",
-    "sprite": "marcos.jpeg",
-    "sprite": "pedro.jpeg"
-    
+    "bg": "tela_preta.png",
+    "sprite": ["marcos.jpeg"]
   },
   {
     "personagem": "Marcos",
     "fala": "Entre fragmentos comuns, encontrei um pequeno objeto metálico, coberto de escrituras estranhas.",
-    "sprite": "marcos.jpeg",
-    "bg": "fundo_ditadura.jpeg",
-    "sprite": "pedro.jpeg"
+    "bg": "tela_preta.png",
+    "sprite": ["marcos.jpeg"]
   },
   {
     "personagem": "Marcos",
     "fala": "Quando toquei nele, uma luz forte tomou conta da minha visão.",
-    "bg": "fundo_ditadura.jpeg",
-    "sprite": "marcos.jpeg",
-    "sprite": "pedro.jpeg"
+    "bg": "tela_preta.png",
+    "sprite": ["marcos.jpeg"]
+  },
+
+  {
+    "personagem": "Marcos",
+    "fala": "Eu abri os olhos em uma rua antiga. O cheiro de gasolina e jornal recém-impresso enchia o ar.",
+    "bg": "rua.png",
+    "sprite": ["marcos.jpeg"]
   },
   {
     "personagem": "Marcos",
-    "fala": "Enquanto meus assistentes recolhiam fragmentos de cerâmica, avistei algo parcialmente enterrado sob uma figueira retorcida: um totem de pedra negra, coberto por símbolos misteriosos. A superfície parecia pulsar levemente, como se respirasse.",
-    "sprite": "marcos.jpeg",
-    "bg": "fundo_ditadura.jpeg",
-    "sprite": "pedro.jpeg"
+    "fala": "Carros velhos passavam acelerados. Pessoas caminhavam apressadas, olhando para os lados com nervosismo.",
+    "bg": "rua.png",
+    "sprite": ["marcos.jpeg"]
+  },
+  {
+    "personagem": "Marcos",
+    "fala": "Um rádio tocava marchas militares. Algo estava muito errado.",
+    "bg": "rua.png",
+    "sprite": ["marcos.jpeg"]
+  },
+
+  {
+    "personagem": "Marcos",
+    "fala": "Uma pessoa esbarrou em mim enquanto tirava fotos de soldados ao longe.",
+    "bg": "rua.png",
+    "sprite": ["marcos.jpeg", "pedro.jpeg"]
+  },
+  {
+    "personagem": "Pedro",
+    "fala": "Foi mal, eu… você não é daqui, né?",
+    "bg": "rua.png",
+    "sprite": ["marcos.jpeg", "pedro.jpeg"]
+  },
+  {
+    "personagem": "Marcos",
+    "fala": "Desculpa, mas poderia me dizer que dia estamos?",
+    "bg": "rua.png",
+    "sprite": ["marcos.jpeg", "pedro.jpeg"]
+  },
+  {
+    "personagem": "Pedro",
+    "fala": "31 de março.",
+    "bg": "rua.png",
+    "sprite": ["marcos.jpeg", "pedro.jpeg"]
+  },
+  {
+    "personagem": "Marcos",
+    "fala": "De que ano?",
+    "bg": "rua.png",
+    "sprite": ["marcos.jpeg", "pedro.jpeg"]
+  },
+  {
+    "personagem": "Pedro",
+    "fala": "1964.",
+    "bg": "rua.png",
+    "sprite": ["marcos.jpeg", "pedro.jpeg"]
+  },
+  {
+    "personagem": "Marcos",
+    "fala": "Isto é...",
+    "bg": "rua.png",
+    "sprite": ["marcos.jpeg", "pedro.jpeg"]
+  },
+
+  {
+    "personagem": "Pedro",
+    "fala": "Sou Pedro. Jornalista… ou quase isso.",
+    "bg": "rua.png",
+    "sprite": ["marcos.jpeg", "pedro.jpeg"]
+  },
+  {
+    "personagem": "Marcos",
+    "fala": "Expliquei que eu estava perdido.",
+    "bg": "rua.png",
+    "sprite": ["marcos.jpeg", "pedro.jpeg"]
+  },
+  {
+    "personagem": "Pedro",
+    "fala": "Hoje não é dia pra estar por aqui. A cidade tá estranha.",
+    "bg": "rua.png",
+    "sprite": ["marcos.jpeg", "pedro.jpeg"]
+  },
+
+  {
+    "personagem": "",
+    "fala": "Militares começaram a revistar pessoas na rua.",
+    "bg": "rua.png",
+    "sprite": ["marcos.jpeg", "pedro.jpeg"]
+  },
+  {
+    "personagem": "Pedro",
+    "fala": "Eles viram que eu estava fotografando… precisamos decidir rápido.",
+    "bg": "rua.png",
+    "sprite": ["marcos.jpeg", "pedro.jpeg"]
+  },
+
+  {
+    "tipo": "escolha",
+    "opcoes": [
+      { "key": "A", "texto": "Fugir pelas ruas" },
+      { "key": "B", "texto": "Tentar agir naturalmente" }
+    ]
+  },
+
+
+  { "tipo": "meta_skip" },
+
+  {
+    "caminho": "A",
+    "personagem": "",
+    "fala": "Corremos pelas ruas estreitas, tentando despistar os soldados.",
+    "bg": "rua.png",
+    "sprite": ["marcos.jpeg", "pedro.jpeg"]
+  },
+  {
+    "caminho": "A",
+    "personagem": "",
+    "fala": "Entramos em uma casa abandonada. Pedro respirava rápido.",
+    "bg": "rua.png",
+    "sprite": ["marcos.jpeg", "pedro.jpeg"]
+  },
+  {
+    "caminho": "A",
+    "personagem": "Pedro",
+    "fala": "Isso tá pior do que eu imaginava...",
+    "bg": "rua.png",
+    "sprite": ["marcos.jpeg", "pedro.jpeg"]
+  },
+  {
+    "caminho": "A",
+    "personagem": "",
+    "fala": "Batidas na porta.",
+    "bg": "rua.png",
+    "sprite": ["marcos.jpeg", "pedro.jpeg"]
+  },
+  {
+    "caminho": "A",
+    "personagem": "",
+    "fala": "Soldados invadiram o lugar.",
+    "bg": "rua.png",
+    "sprite": ["marcos.jpeg"]
+  },
+  {
+    "caminho": "A",
+    "personagem": "Marcos",
+    "fala": "Gritei para Pedro fugir, mas fui segurado pelos militares.",
+    "bg": "rua.png",
+    "sprite": ["marcos.jpeg"]
+  },
+
+
+  { "tipo": "meta_skip" },
+
+  {
+    "caminho": "B",
+    "personagem": "",
+    "fala": "Tentamos agir naturalmente quando os soldados se aproximaram.",
+    "bg": "rua.png",
+    "sprite": ["marcos.jpeg", "pedro.jpeg"]
+  },
+  {
+    "caminho": "B",
+    "personagem": "",
+    "fala": "Eles viram a câmera de Pedro e ficaram desconfiados.",
+    "bg": "rua.png",
+    "sprite": ["marcos.jpeg", "pedro.jpeg"]
+  },
+  {
+    "caminho": "B",
+    "personagem": "",
+    "fala": "Fomos detidos sem chance de explicação.",
+    "bg": "rua.png",
+    "sprite": ["marcos.jpeg", "pedro.jpeg"]
+  },
+
+
+  { "tipo": "meta_skip" },
+
+  {
+    "personagem": "",
+    "fala": "A sala era escura. Um soldado me fazia perguntas sem parar.",
+    "bg": "preso.png",
+    "sprite": ["marcos.jpeg"]
+  },
+  {
+    "personagem": "",
+    "fala": "Nada do que eu dizia parecia importar.",
+    "bg": "preso.png",
+    "sprite": ["marcos.jpeg"]
+  },
+  {
+    "personagem": "",
+    "fala": "Fui jogado em uma cela pequena.",
+    "bg": "preso.png",
+    "sprite": ["marcos.jpeg"]
+  },
+  {
+    "personagem": "Pedro",
+    "fala": "Ei… você tá vivo?",
+    "bg": "preso.png",
+    "sprite": ["marcos.jpeg", "pedro.jpeg"]
+  },
+  {
+    "personagem": "Pedro",
+    "fala": "Eu devia ter fugido mais rápido...",
+    "bg": "preso.png",
+    "sprite": ["marcos.jpeg", "pedro.jpeg"]
+  },
+  {
+    "personagem": "Marcos",
+    "fala": "Ainda dá pra agir.",
+    "bg": "preso.png",
+    "sprite": ["marcos.jpeg", "pedro.jpeg"]
+  },
+  {
+    "personagem": "",
+    "fala": "Combinamos um plano desesperado para escapar.",
+    "bg": "preso.png",
+    "sprite": ["marcos.jpeg", "pedro.jpeg"]
+  },
+
+  {
+    "tipo": "escolha",
+    "opcoes": [
+      { "key": "C", "texto": "Buscar jornalistas" },
+      { "key": "D", "texto": "Buscar militares legalistas" }
+    ]
+  },
+
+
+  { "tipo": "meta_skip" },
+
+  {
+    "caminho": "C",
+    "personagem": "",
+    "fala": "Conseguimos escapar durante a troca de turno dos guardas.",
+    "bg": "preso.png",
+    "sprite": ["marcos.jpeg", "pedro.jpeg"]
+  },
+  {
+    "caminho": "C",
+    "personagem": "",
+    "fala": "Encontramos jornalistas confiáveis e entregamos tudo que sabíamos.",
+    "bg": "tela_preta.png",
+    "sprite": ["marcos.jpeg", "pedro.jpeg"]
+  },
+  {
+    "caminho": "C",
+    "personagem": "",
+    "fala": "As denúncias se espalharam rapidamente.",
+    "bg": "tela_preta.png",
+    "sprite": ["marcos.jpeg"]
+  },
+  {
+    "caminho": "C",
+    "personagem": "",
+    "fala": "A ditadura ainda aconteceu, mas durou menos.",
+    "bg": "tela_preta.png",
+    "sprite": ["marcos.jpeg"]
+  },
+  {
+    "caminho": "C",
+    "personagem": "Marcos",
+    "fala": "De volta ao presente, notei pequenas mudanças… boas, mas discretas.",
+    "bg": "tela_preta.png",
+    "sprite": ["marcos.jpeg"]
+  },
+
+  { "tipo": "meta_skip" },
+
+  {
+    "caminho": "D",
+    "personagem": "",
+    "fala": "Escapamos e procuramos militares legalistas.",
+    "bg": "tela_preta.png",
+    "sprite": ["marcos.jpeg", "pedro.jpeg"]
+  },
+  {
+    "caminho": "D",
+    "personagem": "Pedro",
+    "fala": "Essas provas podem virar a mesa.",
+    "bg": "tela_preta.png",
+    "sprite": ["marcos.jpeg", "pedro.jpeg"]
+  },
+  {
+    "caminho": "D",
+    "personagem": "",
+    "fala": "A articulação golpista perdeu coordenação rapidamente.",
+    "bg": "tela_preta.png",
+    "sprite": ["marcos.jpeg"]
+  },
+  {
+    "caminho": "D",
+    "personagem": "",
+    "fala": "O golpe fracassou antes de começar.",
+    "bg": "tela_preta.png",
+    "sprite": ["marcos.jpeg"]
+  },
+  {
+    "caminho": "D",
+    "personagem": "Marcos",
+    "fala": "De volta ao presente, encontrei um país que nunca perdeu sua democracia.",
+    "bg": "tela_preta.png",
+    "sprite": ["marcos.jpeg"]
+  },
+
+  { "tipo": "meta_skip" },
+
+  {
+    "personagem": "Marcos",
+    "fala": "Olhei para o objeto que iniciou tudo. Ele parecia silencioso… mas não inofensivo.",
+    "bg": "tela_preta.png",
+    "sprite": ["marcos.jpeg"]
   }
 ]

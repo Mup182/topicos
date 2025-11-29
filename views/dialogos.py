@@ -1,4 +1,4 @@
-# views/dialogos.py — compatível com Arcade 2.6.x
+# views/dialogos.py — compatível com Arcade 2.6.x, com suporte a "escolha"
 import json
 import arcade
 import traceback
@@ -19,44 +19,42 @@ class TelaDialogos(arcade.View):
         font_name: str = "Arial",
     ):
         super().__init__()
-        # valores iniciais (serão atualizados em on_show/on_draw)
         self.largura = largura
         self.altura = altura
         self.font_name = font_name
 
-        # roteiro
-        self.roteiro: List[Dict] = self._carregar_roteiro(arquivo_json)
+        # roteiro mestre
+        self.master_roteiro: List[Dict] = self._carregar_roteiro(arquivo_json)
         self.index = 0
 
-        # sprites (Sprite ou None)
+        # sprites
         self.bg_sprite: Optional[arcade.Sprite] = None
-        self.char_sprite: Optional[arcade.Sprite] = None
+        self.char_sprites: List[arcade.Sprite] = []  # ← CORRIGIDO
 
-        # posição do char (decidida pelo nome do arquivo do sprite)
-        # valores: "right" ou "top"
-        self.char_position: str = "right"
+        # escolha
+        self.waiting_choice = False
+        self.current_choice = None
+        self.choice_buttons = []
 
         # conteúdo atual
         self.personagem_atual = ""
         self.texto_atual = ""
 
-        # layout da caixa de diálogo (valores base — largura da área de texto será ajustada se houver sprite)
+        # layout
         self.box_margin = 24
         self.box_height = int(self.altura * 0.28)
         self.box_padding = 16
         self.name_area_height = 32
 
-        # serão calculados em on_show / on_draw
         self.box_left = self.box_margin
         self.box_bottom = self.box_margin
         self.box_top = self.box_bottom + self.box_height
         self.box_width = max(100, self.largura - 2 * self.box_margin)
 
-        # objetos arcade.Text (definidos com largura provisória; atualizaremos dinamicamente)
         self.name_text = arcade.Text(
             "",
             self.box_left + self.box_padding,
-            0,  # y definido dinamicamente
+            0,
             arcade.color.WHITE,
             18,
             anchor_y="top",
@@ -66,7 +64,7 @@ class TelaDialogos(arcade.View):
         self.dialog_text = arcade.Text(
             "",
             self.box_left + self.box_padding,
-            0,  # y definido dinamicamente
+            0,
             arcade.color.WHITE,
             16,
             width=self.box_width - 2 * self.box_padding,
@@ -76,42 +74,14 @@ class TelaDialogos(arcade.View):
             font_name=self.font_name,
         )
 
-        # aplica a primeira fala (se houver)
-        if self.roteiro:
+        # aplica 1ª fala
+        if self.master_roteiro:
             try:
-                self._aplicar_fala(self.roteiro[0])
+                self._aplicar_item(self.master_roteiro[0])
             except Exception:
                 traceback.print_exc()
 
-    # ------------------------------
-    def on_show(self):
-        # atualiza valores com a janela real quando a view é mostrada
-        try:
-            self.largura = int(self.window.width)
-            self.altura = int(self.window.height)
-        except Exception:
-            pass
-
-        # recalcula box e textos
-        self._recalc_layout()
-
-        # reescalona background e personagem (caso já tenham sido carregados)
-        if self.bg_sprite:
-            self._rescale_bg()
-        if self.char_sprite:
-            self._rescale_char()
-
-    def on_resize(self, width, height):
-        # manter tudo em sincronia se a janela for redimensionada
-        self.largura = int(width)
-        self.altura = int(height)
-        self._recalc_layout()
-        if self.bg_sprite:
-            self._rescale_bg()
-        if self.char_sprite:
-            self._rescale_char()
-
-    # ------------------------------
+    # ----------------------------------------------------------------------
     def _carregar_roteiro(self, arquivo_json: str) -> List[Dict]:
         caminho = DIALOGOS_DIR / arquivo_json
         if not caminho.exists():
@@ -121,258 +91,261 @@ class TelaDialogos(arcade.View):
             with open(caminho, "r", encoding="utf-8") as f:
                 data = json.load(f)
             if not isinstance(data, list):
-                print("[TelaDialogos] Formato inválido: JSON deve ser uma lista de falas.")
+                print("[TelaDialogos] JSON deve ser uma lista.")
                 return []
             return data
         except Exception:
             traceback.print_exc()
             return []
 
-    # ------------------------------
-    def _criar_sprite_bg(self, path: Path) -> Optional[arcade.Sprite]:
+    # ----------------------------------------------------------------------
+    def _criar_sprite_bg(self, path: Path):
         try:
-            sprite = arcade.Sprite(str(path), scale=1.0)
-            sprite.center_x = self.largura // 2
-            sprite.center_y = self.altura // 2
-            # escala em _rescale_bg
-            self.bg_sprite = sprite
+            sp = arcade.Sprite(str(path), scale=1.0)
+            sp.center_x = self.largura // 2
+            sp.center_y = self.altura // 2
+            self.bg_sprite = sp
             self._rescale_bg()
-            return sprite
-        except Exception:
+        except:
             traceback.print_exc()
-            return None
 
     def _rescale_bg(self):
-        # garante que o background cubra a tela mantendo aspecto
         try:
             tex = self.bg_sprite.texture
-            if not tex:
-                return
             sx = self.largura / tex.width
             sy = self.altura / tex.height
-            # usamos max para cobrir toda a tela (preencher) — irá cortar ao manter proporção
-            scale = max(sx, sy)
-            self.bg_sprite.scale = scale
-            self.bg_sprite.center_x = self.largura // 2
-            self.bg_sprite.center_y = self.altura // 2
-        except Exception:
+            self.bg_sprite.scale = max(sx, sy)
+        except:
             traceback.print_exc()
 
-    # ------------------------------
-    def _criar_sprite_char(self, path: Path) -> Optional[arcade.Sprite]:
+    # ----------------------------------------------------------------------
+    def _criar_sprite_char(self, filename: str):
+        """Cria sprite SEM posicionar ainda."""
         try:
-            sprite = arcade.Sprite(str(path), scale=1.0)
-            self.char_sprite = sprite
-            # decide posição com base no nome do arquivo (case-insensitive)
-            name = path.name.lower()
-            if "pedro" in name:
-                self.char_position = "top"
-            elif "marcos" in name:
-                self.char_position = "right"
-            else:
-                # default à direita
-                self.char_position = "right"
-            self._rescale_char()
-            return sprite
-        except Exception:
+            p = ASSETS_SPRITES_DIR / filename
+            sp = arcade.Sprite(str(p), scale=1.0)
+            sp.filename_lower = filename.lower()  # ← CORRIGIDO: referência estável
+            return sp
+        except:
             traceback.print_exc()
             return None
 
-    def _rescale_char(self):
+    # ----------------------------------------------------------------------
+    def _posicionar_char_sprites(self):
+        """Posiciona TODOS os sprites simultaneamente (coexistência real)."""
         try:
-            if not self.char_sprite or not self.char_sprite.texture:
-                return
+            right_margin = 20
 
-            tex = self.char_sprite.texture
+            for sp in self.char_sprites:
+                fname = sp.filename_lower  # ← AGORA funciona SEM depender de arcade
 
-            if self.char_position == "top":
-                # ocupa cerca de 30% da largura quando em cima (visível em primeiro plano)
-                target_w = int(self.largura * 0.30)
-                scale = target_w / tex.width
-                self.char_sprite.scale = scale
-                # posiciona centralizado horizontalmente, acima da caixa (frente da tela)
-                cx = self.largura // 2
-                cy = int(self.box_top + (self.char_sprite.height * 0.20))
-                self.char_sprite.center_x = cx
-                self.char_sprite.center_y = cy
-            else:
-                # posição 'right': ocupa cerca de 22% da largura da tela
-                target_w = int(self.largura * 0.22)
-                scale = target_w / tex.width
-                self.char_sprite.scale = scale
-                # posição: EXACTAMENTE ao lado direito da caixa de diálogo
-                margin = 20
-                # center_x = box_right + margin + half sprite width
-                box_right = self.box_left + self.box_width
-                self.char_sprite.center_x = box_right + margin + (self.char_sprite.width // 2)
-                self.char_sprite.center_y = self.box_bottom + (self.box_height // 2)
-        except Exception:
+                # -----------------------
+                # PEDRO (cima)
+                # -----------------------
+                if "pedro" in fname:
+                    target_w = int(self.largura * 0.47)
+                    scale = target_w / sp.texture.width
+                    sp.scale = scale
+                    sp.center_x = self.largura // 2
+                    sp.center_y = int(self.box_top + sp.height * 0.10)
+                    continue
+
+                # -----------------------
+                # MARCOS (direita)
+                # -----------------------
+                if "marcos" in fname:
+                    target_w = int(self.largura * 0.22)
+                    scale = target_w / sp.texture.width
+                    sp.scale = scale
+                    box_right = self.box_left + self.box_width
+                    sp.center_x = box_right + right_margin + sp.width / 2
+                    sp.center_y = self.box_bottom + self.box_height / 2
+                    continue
+
+                # fallback
+                sp.center_x = self.largura - 150
+                sp.center_y = self.altura // 2
+
+        except:
             traceback.print_exc()
 
-    # ------------------------------
-    def _aplicar_fala(self, fala_obj: Dict):
-        try:
-            self.personagem_atual = fala_obj.get("personagem", "") or ""
-            self.texto_atual = fala_obj.get("fala", "") or ""
+    # ----------------------------------------------------------------------
+    def _aplicar_item(self, item: Dict):
 
-            # atualiza textos
-            self.name_text.text = self.personagem_atual
-            self.dialog_text.text = self.texto_atual
+        # escolha
+        if item.get("tipo") == "escolha":
+            self.waiting_choice = True
+            self.current_choice = item
+            self._prepare_choice_buttons(item)
+            return
 
-            # BACKGROUND (carrega sprite e escala)
-            bg_name = fala_obj.get("bg")
-            if bg_name:
-                bg_path = ASSETS_BG_DIR / bg_name
-                if bg_path.exists():
-                    self.bg_sprite = self._criar_sprite_bg(bg_path)
-                else:
-                    print(f"[TelaDialogos] BG não encontrado: {bg_path}")
-                    self.bg_sprite = None
+        # fala normal
+        self.waiting_choice = False
+        self.current_choice = None
+        self.choice_buttons = []
+
+        self.personagem_atual = item.get("personagem", "")
+        self.texto_atual = item.get("fala", "")
+
+        # background
+        bg = item.get("bg")
+        if bg:
+            p = ASSETS_BG_DIR / bg
+            if p.exists():
+                self._criar_sprite_bg(p)
             else:
                 self.bg_sprite = None
+        else:
+            self.bg_sprite = None
 
-            # SPRITE DO PERSONAGEM (carrega e posiciona) ← agora DECIDIDO PELO NOME DO ARQUIVO
-            sprite_name = fala_obj.get("sprite")
-            if sprite_name:
-                sp_path = ASSETS_SPRITES_DIR / sprite_name
-                if sp_path.exists():
-                    self.char_sprite = self._criar_sprite_char(sp_path)
-                else:
-                    print(f"[TelaDialogos] Sprite não encontrado: {sp_path}")
-                    self.char_sprite = None
-            else:
-                self.char_sprite = None
+        # sprites
+        self.char_sprites = []
+        spr = item.get("sprite")
 
-            # recalcula layout (usa o sprite atual para ajustar largura do texto)
-            self._recalc_layout()
-        except Exception:
-            traceback.print_exc()
+        if isinstance(spr, list):
+            for s in spr:
+                if not s:
+                    continue
+                sp = self._criar_sprite_char(s)
+                if sp:
+                    self.char_sprites.append(sp)
 
-    # ------------------------------
+        elif isinstance(spr, str):
+            sp = self._criar_sprite_char(spr)
+            if sp:
+                self.char_sprites.append(sp)
+
+        self._recalc_layout()
+        self._posicionar_char_sprites()
+
+        self.name_text.text = self.personagem_atual
+        self.dialog_text.text = self.texto_atual
+
+    # ----------------------------------------------------------------------
+    def _prepare_choice_buttons(self, item: Dict):
+        opcs = item.get("opcoes", [])
+        self.choice_buttons = []
+        btn_w = int(self.largura * 0.28)
+        btn_h = 48
+        gap = 24
+        total_w = len(opcs) * btn_w + (len(opcs) - 1) * gap
+        start_x = (self.largura - total_w) // 2
+        y = int(self.altura * 0.45)
+
+        for i, o in enumerate(opcs):
+            x1 = start_x + i * (btn_w + gap)
+            x2 = x1 + btn_w
+            y2 = y + btn_h
+            self.choice_buttons.append((x1, y, x2, y2, o["texto"], o["key"]))
+
+    # ----------------------------------------------------------------------
     def _recalc_layout(self):
-        try:
-            self.box_bottom = self.box_margin
-            self.box_top = self.box_bottom + int(self.altura * 0.28)
+        self.box_bottom = self.box_margin
+        self.box_top = self.box_bottom + int(self.altura * 0.28)
 
-            # reserva espaço à direita somente se houver sprite posicionado à direita
-            reserved_right = 0
-            if self.char_sprite and self.char_position == "right":
-                # garantir espaço mínimo para o sprite
+        # reservar espaço SE houver Marcos
+        reserved_right = 0
+        for sp in self.char_sprites:
+            if "marcos" in sp.filename_lower:
                 reserved_right = int(self.largura * 0.25)
 
-            # caixa reduzida para caber sprite ao lado
-            self.box_width = max(200, self.largura - 2 * self.box_margin - reserved_right)
+        self.box_width = max(200, self.largura - 2 * self.box_margin - reserved_right)
+        self.dialog_text.width = self.box_width - 2 * self.box_padding
+        self.name_text.x = self.box_left + self.box_padding
+        self.name_text.y = self.box_top - self.box_padding
+        self.dialog_text.x = self.name_text.x
+        self.dialog_text.y = self.name_text.y - self.name_area_height
 
-            # texto acompanha nova largura
-            self.dialog_text.width = self.box_width - 2 * self.box_padding
-
-            # reposiciona textos
-            self.name_text.x = self.box_left + self.box_padding
-            self.name_text.y = self.box_top - self.box_padding
-
-            self.dialog_text.x = self.name_text.x
-            self.dialog_text.y = self.name_text.y - self.name_area_height
-        except Exception:
-            traceback.print_exc()
-
-    # ------------------------------
+    # ----------------------------------------------------------------------
     def _draw_dialog_box(self):
         l = self.box_left
-        r = self.box_left + self.box_width
+        r = l + self.box_width
         b = self.box_bottom
         t = self.box_top
 
-        # preenchimento semi-transparente (linhas horizontais)
         for y in range(int(b), int(t), 4):
             arcade.draw_line(l, y, r, y, (0, 0, 0, 180), 4)
 
-        # contorno
-        arcade.draw_line(l, b, r, b, arcade.color.WHITE, 2)
-        arcade.draw_line(l, t, r, t, arcade.color.WHITE, 2)
-        arcade.draw_line(l, b, l, t, arcade.color.WHITE, 2)
-        arcade.draw_line(r, b, r, t, arcade.color.WHITE, 2)
+        arcade.draw_rectangle_outline(
+            (l + r) / 2, (b + t) / 2,
+            self.box_width, self.box_height,
+            arcade.color.WHITE, 2
+        )
 
-    # ------------------------------
+    # ----------------------------------------------------------------------
     def on_draw(self):
-        # atualiza tamanho (útil em fullscreen / after show)
         try:
             self.largura = int(self.window.width)
             self.altura = int(self.window.height)
-        except Exception:
+        except:
             pass
 
-        # recalcula layout e reescalona sprites antes de desenhar
         self._recalc_layout()
         if self.bg_sprite:
             self._rescale_bg()
-        if self.char_sprite:
-            self._rescale_char()
+        self._posicionar_char_sprites()
 
         self.clear()
 
-        # desenha background (preenchendo a tela)
         if self.bg_sprite:
-            try:
-                self.bg_sprite.draw()
-            except Exception:
-                # fallback defensivo: se Sprite.draw falhar, desenhar textura manualmente
-                try:
-                    tex = self.bg_sprite.texture
-                    # draw_texture_rect signature varies — fallback paliativo:
-                    if hasattr(arcade, "draw_texture_rect"):
-                        arcade.draw_texture_rect(tex, 0, 0, self.largura, self.altura, 0)
-                    else:
-                        # desenha linhas pretas como último recurso
-                        for y in range(0, self.altura, 4):
-                            arcade.draw_line(0, y, self.largura, y, arcade.color.BLACK, 4)
-                except Exception:
-                    for y in range(0, self.altura, 4):
-                        arcade.draw_line(0, y, self.largura, y, arcade.color.BLACK, 4)
+            self.bg_sprite.draw()
 
-        # desenha sprite do personagem (à direita ou no topo)
-        if self.char_sprite:
-            try:
-                self.char_sprite.draw()
-            except Exception:
-                # fallback: tentar desenhar a textura diretamente (se disponível)
-                try:
-                    tex = self.char_sprite.texture
-                    cx = int(self.char_sprite.center_x)
-                    cy = int(self.char_sprite.center_y)
-                    w = int(self.char_sprite.width)
-                    h = int(self.char_sprite.height)
-                    if hasattr(arcade, "draw_texture_rect"):
-                        arcade.draw_texture_rect(tex, cx - w // 2, cy - h // 2, w, h, 0)
-                except Exception:
-                    pass
+        # desenha todos os sprites (coexistência total)
+        for sp in self.char_sprites:
+            sp.draw()
 
-        # desenha caixa + textos
+        if self.waiting_choice and self.current_choice:
+            for (x1, y1, x2, y2, label, key) in self.choice_buttons:
+                arcade.draw_rectangle_outline((x1+x2)//2, (y1+y2)//2, x2-x1, y2-y1, arcade.color.WHITE, 2)
+                arcade.draw_text(label, (x1+x2)//2, (y1+y2)//2, arcade.color.WHITE, 16, anchor_x="center", anchor_y="center")
+            return
+
         self._draw_dialog_box()
-
         if self.personagem_atual:
-            try:
-                self.name_text.draw()
-            except Exception:
-                pass
+            self.name_text.draw()
+        self.dialog_text.draw()
 
-        try:
-            self.dialog_text.draw()
-        except Exception:
-            pass
-
-    # ------------------------------
+    # ----------------------------------------------------------------------
     def on_mouse_press(self, x, y, button, modifiers):
+
+        if self.waiting_choice and self.current_choice:
+            for (x1, y1, x2, y2, label, key) in self.choice_buttons:
+                if x1 <= x <= x2 and y1 <= y <= y2:
+                    self._handle_choice_selection(key)
+                    return
+            return
+
         self.index += 1
-        if self.index < len(self.roteiro):
-            try:
-                self._aplicar_fala(self.roteiro[self.index])
-            except Exception:
-                traceback.print_exc()
+        while self.index < len(self.master_roteiro) and self.master_roteiro[self.index].get("tipo") == "meta_skip":
+            self.index += 1
+
+        if self.index < len(self.master_roteiro):
+            self._aplicar_item(self.master_roteiro[self.index])
         else:
             if hasattr(self.window, "menu_view"):
                 self.window.show_view(self.window.menu_view)
 
-    # volta ao menu com ESC
+    # ----------------------------------------------------------------------
+    def _handle_choice_selection(self, key: str):
+        for i, item in enumerate(self.master_roteiro):
+            if item.get("caminho") == key:
+                self.index = i
+                self.waiting_choice = False
+                self.current_choice = None
+                self.choice_buttons = []
+                self._aplicar_item(self.master_roteiro[i])
+                return
+
+        # fallback
+        self.waiting_choice = False
+        self.index += 1
+        if self.index < len(self.master_roteiro):
+            self._aplicar_item(self.master_roteiro[self.index])
+        else:
+            if hasattr(self.window, "menu_view"):
+                self.window.show_view(self.window.menu_view)
+
+    # ----------------------------------------------------------------------
     def on_key_press(self, key, modifiers):
         if key == arcade.key.ESCAPE:
             if hasattr(self.window, "menu_view"):

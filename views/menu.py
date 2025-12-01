@@ -24,12 +24,12 @@ class TelaMenu(arcade.View):
         self.font_name = font_name or "Arial"
         self.mouse_pos: Tuple[int, int] = (0, 0)
 
-        # ------- SISTEMA DE ÁUDIO -------
+        #musica
         self.musica_ativa = True
         self.musica_player = None
         self.musica_obj = None
 
-        # ------- MENU PRINCIPAL -------
+        # menuprincipal
         cx = self.largura // 2
         start_y = self.altura // 2 + 110
         step = 110
@@ -48,7 +48,7 @@ class TelaMenu(arcade.View):
             Botao("Configurações", cx, start_y - 2 * step, largura_btn, altura_btn, acao="config"),
         ]
 
-        # Mini-tela de config
+        # mini-tela de config
         self.modo_config = False
         self.botao_musica = self.__criar_botao_musica("Desativar Música")
         self.botao_voltar = Botao(
@@ -80,7 +80,7 @@ class TelaMenu(arcade.View):
             acao="toggle_musica"
         )
 
-    # ---------------------------- ÁUDIO ----------------------------
+    #audio
     def _carregar_musica(self):
         caminho = "views/sounds/musica.wav"
         print("Carregando música:", caminho)

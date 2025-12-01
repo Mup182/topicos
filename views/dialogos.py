@@ -29,7 +29,7 @@ class TelaDialogos(arcade.View):
 
         # sprites
         self.bg_sprite: Optional[arcade.Sprite] = None
-        self.char_sprites: List[arcade.Sprite] = []  # ← CORRIGIDO
+        self.char_sprites: List[arcade.Sprite] = []  # ← corrigido
 
         # escolha
         self.waiting_choice = False
@@ -124,7 +124,7 @@ class TelaDialogos(arcade.View):
         try:
             p = ASSETS_SPRITES_DIR / filename
             sp = arcade.Sprite(str(p), scale=1.0)
-            sp.filename_lower = filename.lower()  # ← CORRIGIDO: referência estável
+            sp.filename_lower = filename.lower()  # nova referência
             return sp
         except:
             traceback.print_exc()
@@ -132,16 +132,14 @@ class TelaDialogos(arcade.View):
 
     # ----------------------------------------------------------------------
     def _posicionar_char_sprites(self):
-        """Posiciona TODOS os sprites simultaneamente (coexistência real)."""
+        """Posiciona todos os sprites simultaneamente."""
         try:
             right_margin = 20
 
             for sp in self.char_sprites:
-                fname = sp.filename_lower  # ← AGORA funciona SEM depender de arcade
+                fname = sp.filename_lower
 
-                # -----------------------
-                # PEDRO (cima)
-                # -----------------------
+                # PEDRO (centro superior)
                 if "pedro" in fname:
                     target_w = int(self.largura * 0.47)
                     scale = target_w / sp.texture.width
@@ -150,9 +148,7 @@ class TelaDialogos(arcade.View):
                     sp.center_y = int(self.box_top + sp.height * 0.10)
                     continue
 
-                # -----------------------
                 # MARCOS (direita)
-                # -----------------------
                 if "marcos" in fname:
                     target_w = int(self.largura * 0.22)
                     scale = target_w / sp.texture.width
@@ -162,7 +158,6 @@ class TelaDialogos(arcade.View):
                     sp.center_y = self.box_bottom + self.box_height / 2
                     continue
 
-                # fallback
                 sp.center_x = self.largura - 150
                 sp.center_y = self.altura // 2
 
@@ -243,7 +238,6 @@ class TelaDialogos(arcade.View):
         self.box_bottom = self.box_margin
         self.box_top = self.box_bottom + int(self.altura * 0.28)
 
-        # reservar espaço SE houver Marcos
         reserved_right = 0
         for sp in self.char_sprites:
             if "marcos" in sp.filename_lower:
@@ -290,16 +284,39 @@ class TelaDialogos(arcade.View):
         if self.bg_sprite:
             self.bg_sprite.draw()
 
-        # desenha todos os sprites (coexistência total)
+        # desenha sprites
         for sp in self.char_sprites:
             sp.draw()
 
+        # ================================
+        #       CAIXAS DE ESCOLHA
+        # ================================
         if self.waiting_choice and self.current_choice:
             for (x1, y1, x2, y2, label, key) in self.choice_buttons:
-                arcade.draw_rectangle_outline((x1+x2)//2, (y1+y2)//2, x2-x1, y2-y1, arcade.color.WHITE, 2)
-                arcade.draw_text(label, (x1+x2)//2, (y1+y2)//2, arcade.color.WHITE, 16, anchor_x="center", anchor_y="center")
+
+                cx = (x1 + x2) // 2
+                cy = (y1 + y2) // 2
+                w = x2 - x1
+                h = y2 - y1
+
+                # fundo escuro
+                arcade.draw_rectangle_filled(cx, cy, w, h, (0, 0, 0, 200))
+
+                # borda clara
+                arcade.draw_rectangle_outline(cx, cy, w, h, arcade.color.WHITE, 3)
+
+                # texto
+                arcade.draw_text(
+                    label,
+                    cx, cy,
+                    arcade.color.WHITE,
+                    18,
+                    anchor_x="center",
+                    anchor_y="center",
+                )
             return
 
+        # caixa de diálogo
         self._draw_dialog_box()
         if self.personagem_atual:
             self.name_text.draw()

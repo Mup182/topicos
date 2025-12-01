@@ -1,4 +1,3 @@
-# views/menu.py — versão DEFINITIVA para Arcade 3.3.3 (sem nenhum draw_rectangle)
 import arcade
 from typing import Tuple, Optional, List
 
@@ -25,28 +24,39 @@ class TelaMenu(arcade.View):
         self.font_name = font_name or "Arial"
         self.mouse_pos: Tuple[int, int] = (0, 0)
 
+        # ------- SISTEMA DE ÁUDIO -------
+        self.musica_ativa = True
+        self.musica_player = None
+        self.musica_obj = None
+
+        # ------- MENU PRINCIPAL -------
         cx = self.largura // 2
         start_y = self.altura // 2 + 110
         step = 110
         largura_btn = 380
         altura_btn = 80
 
+        self.cx = cx
+        self.largura_btn = largura_btn
+        self.altura_btn = altura_btn
+        self.start_y = start_y
+        self.step = step
+
         self.botoes: List[Botao] = [
             Botao("Novo Jogo", cx, start_y, largura_btn, altura_btn, acao="novo"),
             Botao("Carregar", cx, start_y - step, largura_btn, altura_btn, acao="carregar"),
-            Botao("Configurações", cx, start_y - 2 * step, largura_btn, altura_btn, acao="config")
+            Botao("Configurações", cx, start_y - 2 * step, largura_btn, altura_btn, acao="config"),
         ]
 
-        # Textos
-        self.title_text = arcade.Text(
-            "Ecos do Passado",
-            self.largura // 2,
-            self.altura - 120,
-            color=COR_TEXTO,
-            font_size=72,
-            anchor_x="center",
-            anchor_y="center",
-            font_name=self.font_name
+        # Mini-tela de config
+        self.modo_config = False
+        self.botao_musica = self.__criar_botao_musica("Desativar Música")
+        self.botao_voltar = Botao(
+            "Voltar",
+            cx,
+            self.altura//2 - 140,
+            300, 80,
+            acao="voltar_config"
         )
 
         self.footer_text = arcade.Text(
@@ -60,12 +70,62 @@ class TelaMenu(arcade.View):
             font_name=self.font_name
         )
 
+    # helper para criar o botão de música
+    def __criar_botao_musica(self, texto: str) -> Botao:
+        return Botao(
+            texto,
+            self.cx,
+            self.altura//2,
+            420, 90,
+            acao="toggle_musica"
+        )
+
+    # ---------------------------- ÁUDIO ----------------------------
+    def _carregar_musica(self):
+        caminho = "views/sounds/musica.wav"
+        print("Carregando música:", caminho)
+
+        try:
+            self.musica_obj = arcade.load_sound(caminho)
+        except Exception as e:
+            print("ERRO ao carregar música:", e)
+            self.musica_obj = None
+
+    def _tocar_musica(self):
+        if not self.musica_obj:
+            return
+        if not self.musica_ativa:
+            return
+        if self.musica_player:
+            return
+
+        try:
+            self.musica_player = self.musica_obj.play(volume=0.4, loop=True)
+        except TypeError:
+            try:
+                self.musica_player = self.musica_obj.play()
+            except Exception as e:
+                print("Erro ao tocar música (fallback):", e)
+        except Exception as e:
+            print("Erro ao tocar música:", e)
+
+    def _parar_musica(self):
+        if self.musica_player:
+            try:
+                if hasattr(self.musica_player, "pause"):
+                    self.musica_player.pause()
+                elif hasattr(self.musica_player, "stop"):
+                    self.musica_player.stop()
+            except Exception:
+                pass
+        self.musica_player = None
+
     def on_show(self):
         arcade.set_background_color((0, 0, 0))
+        self._carregar_musica()
+        self._tocar_musica()
 
-    # -------------------------------------------------------------------
-    # DESENHAR FUNDO — compatível com Arcade 3.3.3
-    # -------------------------------------------------------------------
+    # ---------------------------- FUNDO ----------------------------
     def _draw_bg(self):
         if self.bg_texture:
             try:
@@ -79,13 +139,10 @@ class TelaMenu(arcade.View):
             except:
                 pass
 
-        # fallback: preenchimento com draw_line
         for y in range(0, self.altura, 4):
             arcade.draw_line(0, y, self.largura, y, (20, 20, 20), 4)
 
-    # -------------------------------------------------------------------
-    # DESENHAR BOTÃO — usando APENAS draw_line
-    # -------------------------------------------------------------------
+    # ---------------------------- DESENHAR ----------------------------
     def _draw_button_rect(self, botao):
         left = botao.cx - botao.width/2
         right = botao.cx + botao.width/2
@@ -94,13 +151,11 @@ class TelaMenu(arcade.View):
 
         color = (80, 80, 80) if botao.hover else (40, 40, 40)
 
-        # preenchimento com linhas
         y = int(bottom)
         while y < int(top):
             arcade.draw_line(left, y, right, y, color, 4)
             y += 4
 
-        # contorno branco
         arcade.draw_line(left, bottom, right, bottom, arcade.color.WHITE, 2)
         arcade.draw_line(left, top, right, top, arcade.color.WHITE, 2)
         arcade.draw_line(left, bottom, left, top, arcade.color.WHITE, 2)
@@ -108,24 +163,77 @@ class TelaMenu(arcade.View):
 
     def on_draw(self):
         self.clear()
-
         self._draw_bg()
 
-        self.title_text.draw()
+        # ---------------- TÍTULO COM SOMBRA ----------------
+        arcade.draw_text(
+            "Ecos do Passado",
+            self.largura // 2 + 4,
+            self.altura - 120 - 4,
+            (0, 0, 0, 220),
+            72,
+            anchor_x="center",
+            anchor_y="center",
+            font_name=self.font_name
+        )
 
-        # desenhar botões
-        for botao in self.botoes:
-            self._draw_button_rect(botao)
-            botao.draw(self.mouse_pos, self.font_name)
+        arcade.draw_text(
+            "Ecos do Passado",
+            self.largura // 2,
+            self.altura - 120,
+            (120, 120, 120),
+            72,
+            anchor_x="center",
+            anchor_y="center",
+            font_name=self.font_name
+        )
+        # ---------------------------------------------------
+
+        if not self.modo_config:
+            for botao in self.botoes:
+                self._draw_button_rect(botao)
+                botao.draw(self.mouse_pos, self.font_name)
+        else:
+            self._draw_button_rect(self.botao_musica)
+            self.botao_musica.draw(self.mouse_pos, self.font_name)
+
+            self._draw_button_rect(self.botao_voltar)
+            self.botao_voltar.draw(self.mouse_pos, self.font_name)
 
         self.footer_text.draw()
 
+    # ---------------------------- INPUT ----------------------------
     def on_mouse_motion(self, x, y, dx, dy):
         self.mouse_pos = (x, y)
-        for b in self.botoes:
-            b.update_hover(self.mouse_pos)
+
+        if not self.modo_config:
+            for b in self.botoes:
+                b.update_hover(self.mouse_pos)
+        else:
+            self.botao_musica.update_hover(self.mouse_pos)
+            self.botao_voltar.update_hover(self.mouse_pos)
 
     def on_mouse_press(self, x, y, button, modifiers):
+
+        # ------------- CONFIG -------------
+        if self.modo_config:
+            if self.botao_musica.contains(x, y):
+
+                if self.musica_ativa:
+                    self.musica_ativa = False
+                    self._parar_musica()
+                    self.botao_musica = self.__criar_botao_musica("Ativar Música")
+                else:
+                    self.musica_ativa = True
+                    self.botao_musica = self.__criar_botao_musica("Desativar Música")
+                    self._tocar_musica()
+
+            elif self.botao_voltar.contains(x, y):
+                self.modo_config = False
+
+            return
+
+        # ------------- MENU PRINCIPAL -------------
         for botao in self.botoes:
             if botao.contains(x, y):
 
@@ -143,9 +251,13 @@ class TelaMenu(arcade.View):
                     print("Função carregar ainda não implementada.")
 
                 elif botao.acao == "config":
-                    print("Configurações ainda não implementadas.")
+                    self.modo_config = True
+
+                    if self.musica_ativa:
+                        self.botao_musica = self.__criar_botao_musica("Desativar Música")
+                    else:
+                        self.botao_musica = self.__criar_botao_musica("Ativar Música")
 
     def on_key_press(self, key, modifiers):
-      if key == arcade.key.ESCAPE:
-        arcade.close_window()
-
+        if key == arcade.key.ESCAPE:
+            arcade.close_window()

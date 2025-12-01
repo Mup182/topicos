@@ -287,21 +287,21 @@
   { "tipo": "meta_skip" },
 
   {
-    "caminho": "D",
-    "personagem": "",
+    "caminho": "C",
+    "personagem": "Marcos",
     "fala": "Escapamos e procuramos militares legalistas.",
     "bg": "tela_preta.png",
     "sprite": ["marcos.jpeg", "pedro.jpeg"]
   },
   {
-    "caminho": "D",
+    "caminho": "C",
     "personagem": "Pedro",
     "fala": "Essas provas podem virar a mesa.",
     "bg": "tela_preta.png",
     "sprite": ["marcos.jpeg", "pedro.jpeg"]
   },
   {
-    "caminho": "D",
+    "caminho": "C",
     "personagem": "",
     "fala": "A articulação golpista perdeu coordenação rapidamente.",
     "bg": "tela_preta.png",
@@ -312,13 +312,13 @@
     "personagem": "",
     "fala": "O golpe fracassou antes de começar.",
     "bg": "tela_preta.png",
-    "sprite": ["marcos.jpeg"]
+    "sprite": ["marcos.png"]
   },
   {
     "caminho": "D",
-    "personagem": "Marcos",
+    "personagem": "",
     "fala": "De volta ao presente, encontrei um país que nunca perdeu sua democracia.",
-    "bg": "tela_preta.png",
+    "bg": "marcosbr.png",
     "sprite": ["marcos.jpeg"]
   },
 

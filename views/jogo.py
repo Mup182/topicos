@@ -1,4 +1,4 @@
-# views/jogo.py — versão sem travar (troca de view em on_update)
+z# views/jogo.py — versão sem travar (troca de view em on_update)
 import arcade
 from typing import Optional
 from core.settings import LARGURA, ALTURA, DEFAULT_BG_PATH, COR_FUNDO_JOGO

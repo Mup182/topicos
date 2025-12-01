@@ -14,7 +14,7 @@
   {
     "personagem": "Marcos",
     "fala": "Quando toquei nele, uma luz forte tomou conta da minha visão.",
-    "bg": "tela_preta.png",
+    "bg": "luz.png",
     "sprite": ["marcos.jpeg"]
   },
 
@@ -134,7 +134,7 @@
     "caminho": "A",
     "personagem": "",
     "fala": "Entramos em uma casa abandonada. Pedro respirava rápido.",
-    "bg": "rua.png",
+    "bg": "casa.png",
     "sprite": ["marcos.jpeg", "pedro.jpeg"]
   },
   {
@@ -148,8 +148,8 @@
     "caminho": "A",
     "personagem": "",
     "fala": "Batidas na porta.",
-    "bg": "rua.png",
-    "sprite": ["marcos.jpeg", "pedro.jpeg"]
+    "bg": "porta.png",
+    "sprite": ["marcos.jpeg"]
   },
   {
     "caminho": "A",

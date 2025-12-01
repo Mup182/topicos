@@ -288,9 +288,7 @@ class TelaDialogos(arcade.View):
         for sp in self.char_sprites:
             sp.draw()
 
-        # ================================
-        #       CAIXAS DE ESCOLHA
-        # ================================
+       #caixas de escolhas
         if self.waiting_choice and self.current_choice:
             for (x1, y1, x2, y2, label, key) in self.choice_buttons:
 

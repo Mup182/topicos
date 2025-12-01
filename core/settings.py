@@ -7,9 +7,9 @@ LARGURA = 1280
 ALTURA = 720
 TITULO = "Ecos do Passado - Protótipo"
 
-DEFAULT_BG_PATH = os.path.join(BASE_DIR, "assets", "bg", "fundo_ditadura.jpeg")
+DEFAULT_BG_PATH = os.path.join(BASE_DIR, "assets", "bg", "menu.png")
 if not os.path.exists(DEFAULT_BG_PATH):
-    alt = os.path.join(BASE_DIR, "fundo_ditadura.jpeg")
+    alt = os.path.join(BASE_DIR, "menu.png")
     DEFAULT_BG_PATH = alt if os.path.exists(alt) else None
 
 CLICK_SOUND_PATH = os.path.join(BASE_DIR, "assets", "sounds", "click.wav")

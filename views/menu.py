@@ -125,7 +125,7 @@ class TelaMenu(arcade.View):
         self._carregar_musica()
         self._tocar_musica()
 
-    # ---------------------------- FUNDO ----------------------------
+    #fundo
     def _draw_bg(self):
         if self.bg_texture:
             try:
@@ -142,7 +142,7 @@ class TelaMenu(arcade.View):
         for y in range(0, self.altura, 4):
             arcade.draw_line(0, y, self.largura, y, (20, 20, 20), 4)
 
-    # ---------------------------- DESENHAR ----------------------------
+    #desenho
     def _draw_button_rect(self, botao):
         left = botao.cx - botao.width/2
         right = botao.cx + botao.width/2
@@ -165,7 +165,7 @@ class TelaMenu(arcade.View):
         self.clear()
         self._draw_bg()
 
-        # ---------------- TÍTULO COM SOMBRA ----------------
+        #titulo co sombra 
         arcade.draw_text(
             "Ecos do Passado",
             self.largura // 2 + 4,
@@ -202,7 +202,7 @@ class TelaMenu(arcade.View):
 
         self.footer_text.draw()
 
-    # ---------------------------- INPUT ----------------------------
+    #input
     def on_mouse_motion(self, x, y, dx, dy):
         self.mouse_pos = (x, y)
 
@@ -215,7 +215,7 @@ class TelaMenu(arcade.View):
 
     def on_mouse_press(self, x, y, button, modifiers):
 
-        # ------------- CONFIG -------------
+        #config
         if self.modo_config:
             if self.botao_musica.contains(x, y):
 
@@ -233,7 +233,7 @@ class TelaMenu(arcade.View):
 
             return
 
-        # ------------- MENU PRINCIPAL -------------
+        #menu principal
         for botao in self.botoes:
             if botao.contains(x, y):
 
